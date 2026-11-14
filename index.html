@@ -2148,7 +2148,8 @@ if (typeof module === "object" && typeof module.exports === "object") Object.ass
       {scale:12.0,y:-86.4}    // 大特写：只取眼部局部（双眉+双眼+鼻梁）
     ];
     
-    let stream,recState='idle',recMode=null,recCanvas=null,recCtx=null,recTick=0,timer=0,recCapTimer=0,recStartTs=0,wcEncoder=null,wcMuxer=null,wcBlob=null,mr=null,mrChunks=[],mrStream=null,mrGuard=0,recLadder=0,emptyRecordCount=0,nativeVideoNext=false,recordedBlob=null,poseTimer=null,countdownTimer=0,recFixedRatio=0.5625,wcFailCount=0,finalizeRecording=null;
+    let stream,recState='idle',recMode=null,recCanvas=null,recCtx=null,recTick=0,recRaf=0,timer=0,recCapTimer=0,recStartTs=0,wcEncoder=null,wcMuxer=null,wcBlob=null,mr=null,mrChunks=[],mrStream=null,mrGuard=0,recLadder=0,emptyRecordCount=0,nativeVideoNext=false,recordedBlob=null,poseTimer=null,countdownTimer=0,recFixedRatio=0.5625,wcFailCount=0,finalizeRecording=null,acCtx=null,acSrc=null,acNode=null,acGain=null,acUrl=null,wcAudio=null,acFrames=0,acBaseTs=0,acChunks=0,acRate=48000,acWarm=null,wakeLock=null,autoStoppedPending=false;
+    const MAX_REC_MS=300000;
     const video=document.querySelector('#camera'),cameraButton=document.querySelector('#cameraButton'),recordButton=document.querySelector('#recordButton'),recordStatus=document.querySelector('#recordStatus');
     /* ================= 镜头运动：真实机位推演（Canvas 透视投影） ================= */
     var MG={c:null,ctx:null,plan:null,pctx:null,W:0,H:0,dpr:1,f:0,raf:0,idx:-1,active:false,t0:0,fit:null,side:false,pw:0,ph:0,ro:null};
@@ -2975,20 +2976,84 @@ var MG_INFO=[
       if(vw/vh>ratio)sw=Math.round(vh*ratio);else sh=Math.round(vw/ratio);
       recCtx.drawImage(video,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,recCanvas.width,recCanvas.height);
     }
+    function stopFrameLoop(){clearInterval(recTick);recTick=0;if(recRaf){cancelAnimationFrame(recRaf);recRaf=0}}
+    function unlockScreen(){try{if(wakeLock){wakeLock.release();wakeLock=null}}catch(error){}wakeLock=null}
+    function lockScreen(){try{if(navigator.wakeLock&&document.visibilityState==='visible'){navigator.wakeLock.request('screen').then(lock=>{wakeLock=lock;lock.addEventListener('release',()=>{wakeLock=null})}).catch(()=>{})}}catch(error){}}
+    function teardownAudio(){
+      try{if(acSrc)acSrc.disconnect()}catch(error){}
+      try{if(acNode){acNode.port.onmessage=null;acNode.disconnect()}}catch(error){}
+      try{if(acGain)acGain.disconnect()}catch(error){}
+      try{if(wcAudio&&wcAudio.state!=='closed')wcAudio.close()}catch(error){}
+      try{if(acCtx&&acCtx.state!=='closed')acCtx.close()}catch(error){}
+      if(acCtx&&acWarm===acCtx)acWarm=null;
+      if(acUrl){try{URL.revokeObjectURL(acUrl)}catch(error){}acUrl=null}
+      acSrc=null;acNode=null;acGain=null;acCtx=null;wcAudio=null;acFrames=0;acChunks=0;
+    }
+    const AUDIO_WORKLET="class QjkCap extends AudioWorkletProcessor{constructor(){super();this.buf=new Float32Array(2048);this.n=0}process(inputs){const ch=inputs[0]&&inputs[0][0];if(!ch)return true;let i=0;while(i<ch.length){const take=Math.min(this.buf.length-this.n,ch.length-i);this.buf.set(ch.subarray(i,i+take),this.n);this.n+=take;i+=take;if(this.n===this.buf.length){this.port.postMessage(this.buf);this.buf=new Float32Array(2048);this.n=0}}return true}}registerProcessor('qjk-cap',QjkCap);";
+    /* iOS 需要在点击手势内同步解锁音频上下文，否则会一直 suspended */
+    function newAudioCtx(){const AC=window.AudioContext||window.webkitAudioContext;try{return new AC({sampleRate:48000})}catch(error){return new AC()}}
+    function warmAudio(){
+      try{
+        if(!acWarm||acWarm.state==='closed')acWarm=newAudioCtx();
+        if(acWarm.state==='suspended'){const p=acWarm.resume();if(p&&p.catch)p.catch(()=>{})}
+      }catch(error){acWarm=null}
+    }
+    async function prepareAudio(){
+      if(typeof AudioEncoder==='undefined'||typeof AudioContext==='undefined')return false;
+      const track=stream&&stream.getAudioTracks().find(item=>item.readyState==='live');
+      if(!track)return false;
+      try{
+        const ctx=(acWarm&&acWarm.state!=='closed')?acWarm:newAudioCtx();
+        if(ctx.state==='suspended'){
+          try{await Promise.race([ctx.resume(),new Promise(resolve=>setTimeout(resolve,900))])}catch(error){}
+        }
+        if(ctx.state!=='running'||!ctx.audioWorklet)throw new Error('audio-locked');
+        const cfg={codec:'mp4a.40.2',sampleRate:ctx.sampleRate,numberOfChannels:1,bitrate:128000};
+        const support=await AudioEncoder.isConfigSupported(cfg);
+        if(!support||!support.supported)throw new Error('no-aac');
+        acUrl=URL.createObjectURL(new Blob([AUDIO_WORKLET],{type:'text/javascript'}));
+        await ctx.audioWorklet.addModule(acUrl);
+        const encoder=new AudioEncoder({output:(chunk,meta)=>{acChunks++;try{if(wcMuxer)wcMuxer.addAudioChunk(chunk,meta)}catch(error){}},error:()=>{}});
+        encoder.configure(cfg);
+        const src=ctx.createMediaStreamSource(new MediaStream([track]));
+        const node=new AudioWorkletNode(ctx,'qjk-cap',{numberOfInputs:1,numberOfOutputs:1,channelCount:1,channelCountMode:'explicit'});
+        const gain=ctx.createGain();gain.gain.value=0;
+        acCtx=ctx;acSrc=src;acNode=node;acGain=gain;wcAudio=encoder;acRate=ctx.sampleRate;
+        return true;
+      }catch(error){teardownAudio();return false}
+    }
+    function startAudioFlow(){
+      if(!acNode||!wcAudio||!acCtx)return;
+      acBaseTs=(Date.now()-recStartTs)*1000;acFrames=0;acChunks=0;
+      acNode.port.onmessage=event=>{
+        const pcm=event.data;
+        if(!pcm||!pcm.length||!wcAudio||wcAudio.state!=='configured')return;
+        try{
+          const data=new AudioData({format:'f32-planar',sampleRate:acRate,numberOfFrames:pcm.length,numberOfChannels:1,timestamp:Math.round(acBaseTs+acFrames/acRate*1e6),data:pcm});
+          wcAudio.encode(data);data.close();
+        }catch(error){}
+        acFrames+=pcm.length;
+      };
+      acSrc.connect(acNode);acNode.connect(acGain);acGain.connect(acCtx.destination);
+    }
     function recCleanup(){
-      clearInterval(recTick);recTick=0;
+      stopFrameLoop();
       clearInterval(timer);clearTimeout(recCapTimer);clearTimeout(mrGuard);timer=recCapTimer=mrGuard=0;
+      unlockScreen();
       try{if(wcEncoder&&wcEncoder.state!=='closed')wcEncoder.close()}catch(error){}
       wcEncoder=null;wcMuxer=null;wcBlob=null;
+      teardownAudio();
       try{if(mr){mr.onstop=null;if(mr.state==='recording')mr.stop()}}catch(error){}
       mr=null;mrChunks=[];
       try{mrStream&&mrStream.getTracks().forEach(track=>track.stop())}catch(error){}
       mrStream=null;
+      if(acWarm&&acWarm.state!=='closed'){try{acWarm.close()}catch(error){}}
+      acWarm=null;
       if(recCanvas){recCanvas.remove();recCanvas=null;recCtx=null}
     }
     async function startRecording(){
       if(recState!=='idle')return;
-      recState='preparing';recordButton.disabled=true;recordStatus.textContent='正在准备录制。';
+      recState='preparing';autoStoppedPending=false;recordButton.disabled=true;recordStatus.textContent='正在准备录制。';
       try{
         if(!stream)cameraButton.click();
         if(!(stream&&video.videoWidth>0)){
@@ -3010,7 +3075,8 @@ var MG_INFO=[
         recordButton.setAttribute('aria-pressed','true');
         recordButton.textContent='结束录制';recordButton.disabled=false;
         cameraButton.disabled=true;
-        recCapTimer=setTimeout(()=>{recordStatus.textContent='已达最长录制时长 10 分钟，正在保存…';stopRecording()},600000);
+        lockScreen();
+        recCapTimer=setTimeout(()=>{recordStatus.textContent='已达最长录制时长 5 分钟，正在保存…';stopRecording()},MAX_REC_MS);
         timer=setInterval(()=>{const seconds=Math.floor((Date.now()-recStartTs)/1000);recordStatus.textContent=`正在录制 · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`},500);
       }catch(error){
         recCleanup();recState='idle';
@@ -3020,26 +3086,36 @@ var MG_INFO=[
     }
     async function startWebCodecs(){
       const width=recCanvas.width,height=recCanvas.height;
+      const bitrate=width*height>=1280*720?10000000:6000000;
       const candidates=[
-        {codec:'avc1.640028',width,height,bitrate:8000000,framerate:30},
-        {codec:'avc1.4D0028',width,height,bitrate:8000000,framerate:30},
-        {codec:'avc1.42001F',width,height,bitrate:8000000,framerate:30}
+        {codec:'avc1.640028',width,height,bitrate,framerate:30,latencyMode:'quality'},
+        {codec:'avc1.4D0028',width,height,bitrate,framerate:30,latencyMode:'quality'},
+        {codec:'avc1.42001F',width,height,bitrate,framerate:30,latencyMode:'quality'}
       ];
       let config=null;
       for(const candidate of candidates){
         try{const support=await VideoEncoder.isConfigSupported(candidate);if(support&&support.supported){config=candidate;break}}catch(error){}
       }
       if(!config)return false;
+      const withAudio=await prepareAudio();
       try{
-        wcMuxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width,height},fastStart:'in-memory',firstTimestampBehavior:'offset'});
+        const options={target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:'avc',width,height},fastStart:'in-memory',firstTimestampBehavior:'cross-track-offset'};
+        if(withAudio)options.audio={codec:'aac',numberOfChannels:1,sampleRate:acRate};
+        wcMuxer=new Mp4Muxer.Muxer(options);
         wcEncoder=new VideoEncoder({output:(chunk,meta)=>{try{wcMuxer.addVideoChunk(chunk,meta)}catch(error){}},error:()=>{}});
         wcEncoder.configure(config);
-      }catch(error){wcEncoder=null;wcMuxer=null;return false}
-      let index=0;
-      recTick=setInterval(()=>{
-        if(!wcEncoder||wcEncoder.state!=='configured')return;
+      }catch(error){teardownAudio();wcEncoder=null;wcMuxer=null;return false}
+      if(withAudio)startAudioFlow();
+      let index=0,nextAt=performance.now();
+      const pump=()=>{
+        if(!wcEncoder||wcEncoder.state!=='configured'){recRaf=0;return}
+        recRaf=requestAnimationFrame(pump);
+        const now=performance.now();
+        if(now<nextAt)return;
+        nextAt+=1000/30;
+        if(now-nextAt>250)nextAt=now;
         recDrawFrame();
-        if(wcEncoder.encodeQueueSize>4)return;
+        if(wcEncoder.encodeQueueSize>6)return;
         try{
           const elapsed=Math.max(0,(Date.now()-recStartTs)*1000);
           const frame=new VideoFrame(recCanvas,{timestamp:elapsed,duration:33333});
@@ -3047,7 +3123,8 @@ var MG_INFO=[
           frame.close();
         }catch(error){}
         index++;
-      },33);
+      };
+      recRaf=requestAnimationFrame(pump);
       recMode='wc';return true;
     }
     async function startMediaRecorder(){
@@ -3072,7 +3149,7 @@ var MG_INFO=[
           instance.onstop=()=>finalizeRecording();
           mr=instance;mrStream=media;
           if(isAppleDevice)instance.start();else instance.start(1000);
-          if(level<=1){clearInterval(recTick);recTick=setInterval(recDrawFrame,33)}
+          if(level<=1){stopFrameLoop();recTick=setInterval(recDrawFrame,33)}
           recMode='mr';recLadder=level;return true;
         }catch(error){mr=null;mrStream=null}
       }
@@ -3084,7 +3161,8 @@ var MG_INFO=[
       recordButton.disabled=true;recordButton.textContent='正在生成视频…';
       clearInterval(timer);timer=0;
       clearTimeout(recCapTimer);recCapTimer=0;
-      clearInterval(recTick);recTick=0;
+      stopFrameLoop();
+      unlockScreen();
       if(recMode==='wc'){void stopWebCodecs();return}
       if(!mr||mr.state!=='recording'){finalizeRecording();return}
       try{mr.stop()}catch(error){finalizeRecording()}
@@ -3092,9 +3170,15 @@ var MG_INFO=[
       mrGuard=setTimeout(()=>{try{if(mr&&mr.state!=='inactive')mr.stop()}catch(error){}finalizeRecording()},6000);
     }
     async function stopWebCodecs(){
-      const encoder=wcEncoder,muxer=wcMuxer;
+      const encoder=wcEncoder,muxer=wcMuxer,audio=wcAudio;
+      stopFrameLoop();
+      if(audio){
+        try{if(audio.state==='configured')await Promise.race([audio.flush(),new Promise(resolve=>setTimeout(resolve,2500))])}catch(error){}
+        try{if(audio.state!=='closed')audio.close()}catch(error){}
+      }
       try{await Promise.race([encoder.flush(),new Promise(resolve=>setTimeout(resolve,5000))])}catch(error){}
       try{encoder.close()}catch(error){}
+      teardownAudio();
       try{muxer.finalize()}catch(error){}
       try{wcBlob=(muxer.target&&muxer.target.buffer&&muxer.target.buffer.byteLength>2048)?new Blob([muxer.target.buffer],{type:'video/mp4'}):null}catch(error){wcBlob=null}
       wcEncoder=null;wcMuxer=null;
@@ -3104,7 +3188,9 @@ var MG_INFO=[
       if(recState!=='saving')return;
       recState='finalizing';
       clearInterval(timer);clearTimeout(recCapTimer);clearTimeout(mrGuard);timer=recCapTimer=mrGuard=0;
-      clearInterval(recTick);recTick=0;
+      stopFrameLoop();
+      unlockScreen();
+      teardownAudio();
       if(recCanvas){recCanvas.remove();recCanvas=null;recCtx=null}
       if(recMode==='wc'){recordedBlob=wcBlob||null;wcBlob=null}
       else{
@@ -3133,6 +3219,15 @@ var MG_INFO=[
       }
       emptyRecordCount=0;
       document.querySelector('#placeholder').classList.remove('hidden');
+      if(autoStoppedPending){
+        recState='idle';
+        try{video.srcObject=null;video.style.display='none'}catch(error){}
+        recordButton.setAttribute('aria-pressed','false');
+        recordButton.textContent='保存到照片';recordButton.disabled=false;
+        cameraButton.disabled=false;cameraButton.textContent='放弃本次视频';
+        recordStatus.textContent='切到后台时已自动结束录制，视频仍保留在本机：点「保存到照片」存入相机，或点「放弃本次视频」。';
+        return;
+      }
       recordStatus.textContent='录制完成，正在打开系统保存面板…';
       void saveRecording();
     }
@@ -3156,7 +3251,7 @@ var MG_INFO=[
     }
     function clearRecordingPreview(){
       recCleanup();
-      recordedBlob=null;recState='idle';
+      recordedBlob=null;recState='idle';autoStoppedPending=false;
       recordButton.setAttribute('aria-pressed','false');
       try{video.pause();video.srcObject=null;video.removeAttribute('src');video.controls=false;video.muted=true;video.load()}catch(error){}
       restartRecordingUI();
@@ -3214,14 +3309,26 @@ var MG_INFO=[
       if(recState!=='idle')return;
       if(recordedBlob&&recordedBlob.size){await saveRecording();return}
       if(nativeVideoNext){nativeVideoNext=false;useNativeCamera('video');return}
+      warmAudio();
       await startRecording();
     });
     window.addEventListener('pagehide',()=>{
-      clearInterval(poseTimer);clearInterval(recTick);recTick=0;
+      clearInterval(poseTimer);stopFrameLoop();unlockScreen();
       try{if(wcEncoder&&wcEncoder.state!=='closed')wcEncoder.close()}catch(error){}
       try{if(mr){mr.onstop=null;if(mr.state==='recording')mr.stop()}}catch(error){}
       try{stream&&stream.getTracks().forEach(track=>track.stop())}catch(error){}
       try{mrStream&&mrStream.getTracks().forEach(track=>track.stop())}catch(error){}
+    });
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='hidden'){
+        if(recState==='recording'){autoStoppedPending=true;stopRecording()}
+        return;
+      }
+      if(recState==='recording')lockScreen();
+      if(autoStoppedPending&&recState==='idle'&&recordedBlob&&recordedBlob.size){
+        recordButton.textContent='保存到照片';recordButton.disabled=false;
+        recordStatus.textContent='切到后台时已自动结束录制，视频仍保留在本机：点「保存到照片」存入相机。';
+      }
     });
 (function(){
       const hint=document.querySelector('#installHint'),text=document.querySelector('#installHintText'),btn=document.querySelector('#installBtn'),close=document.querySelector('#installClose');
