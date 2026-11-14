@@ -92,27 +92,15 @@
     .install-hint .ih-btn{flex:0 0 auto;border-radius:99px;background:var(--lime);color:#16210f;font-weight:700;font-size:13px;padding:8px 14px}
     .install-hint .ih-close{flex:0 0 auto;background:none;color:var(--muted);font-size:16px;padding:6px;min-width:40px;min-height:40px;display:grid;place-items:center}
     .countdown{position:absolute;inset:0;display:grid;place-items:center;font-size:min(26vw,140px);font-weight:800;color:#d8f6a4;text-shadow:0 4px 26px #101411e6;pointer-events:none;z-index:5}
-    /* ===== 新功能：参考线 / 水平仪 / 挑战 / 作品库 ===== */
+    /* ===== 新功能：参考线 / 作品库 ===== */
     .enhance-row{display:flex;align-items:center;gap:6px;width:94%;margin:0 auto;padding:10px 0 0;overflow-x:auto;scrollbar-width:none;justify-content:safe center;flex-wrap:nowrap}
-    .enhance-row::-webkit-scrollbar{display:none}.enhance-row #levelToggle{flex:0 0 auto;margin-left:0;padding:8px 12px;border:1px solid #343d35;border-radius:99px;background:#1a211b;color:#bac2b8;font-size:12px;line-height:1.3;display:inline-flex;align-items:center;gap:0;min-height:34px}.enhance-row #levelToggle .switch{display:none}.enhance-row #levelToggle .control-label{font-size:12px;color:inherit}.enhance-row #levelToggle[aria-checked="true"]{border-color:#d8f6a4;background:#191e18;color:#d8f6a4;box-shadow:inset 0 0 0 1px #d8f6a4}
+    .enhance-row::-webkit-scrollbar{display:none}
     .guide-chip{flex:0 0 auto;padding:8px 12px;border:1px solid #343d35;border-radius:99px;background:#1a211b;color:#bac2b8;font-size:12px;white-space:nowrap;line-height:1.3}
     .guide-chip[aria-pressed="true"]{background:#d8f6a4;border-color:#d8f6a4;color:#202b16;font-weight:700}
-    .level-badge{position:absolute;top:10px;left:10px;z-index:5;padding:5px 10px;border-radius:99px;background:#20241fd9;color:#e8f3e2;font-size:11px;font-weight:600;letter-spacing:.03em}
-    .level-badge.ok{background:#2f7d4f;color:#fff}
-    .horizon{position:absolute;inset:0;z-index:4;pointer-events:none}
-    .horizon path{stroke:#d8f6a4;stroke-width:.5;stroke-dasharray:4 3;opacity:.75}
     .scene.ghost{opacity:.35;pointer-events:none}
-    .challenge-card{width:94%;margin:12px auto 0;padding:14px 16px;border:1px solid #303a31;border-radius:16px;background:#141a15}
-    .ch-top{display:flex;align-items:center;gap:9px}
-    .ch-badge{flex:0 0 auto;padding:4px 9px;border-radius:99px;background:#d8f6a4;color:#202b16;font-size:11px;font-weight:700}
-    .ch-top h2{flex:1;font-size:15.5px;color:#f2f6ee;margin:0;font-weight:700}
-    .ch-done{font-size:11px;color:#93a996;flex:0 0 auto}
-    .challenge-card>p{font-size:12.5px;line-height:1.6;color:#a9bcaa;margin:8px 0 0}
-    .ch-actions{display:flex;gap:9px;margin-top:12px}
     .ch-btn{flex:1;padding:10px 12px;border-radius:12px;border:1px solid #3a443a;background:#20261f;color:#e8f3e2;font-size:12.5px;font-weight:600;line-height:1.35}
     .ch-btn.primary{background:#d8f6a4;border-color:#d8f6a4;color:#202b16}
     .ch-btn.danger{border-color:#5a3535;color:#e2a9a9;background:#2a1f1f}
-    .ch-hint{font-size:11px;color:#71836f;margin:9px 0 0;line-height:1.5}
     .library{width:94%;margin:16px auto 0}
     .lib-head{display:flex;align-items:baseline;gap:8px}
     .lib-head strong{font-size:15px;color:#f2f6ee}
@@ -142,7 +130,6 @@
       <button class="tab" role="tab" aria-selected="true" data-kind="shot">景别</button>
       <button class="tab" role="tab" aria-selected="false" data-kind="composition">构图</button>
       <button class="tab" role="tab" aria-selected="false" data-kind="movement">镜头运动</button>
-<button class="tab" role="tab" aria-selected="false" data-kind="challenge">挑战</button>
     </div>
     <div class="drill-heading"><span id="drillHeading">景别练习</span><span>左右滑动选择</span></div>
     <div class="drill-list" id="drillList" role="group" aria-label="具体练习项目"></div>
@@ -157,25 +144,12 @@
         <div class="countdown hidden" id="countdown" aria-hidden="true">3</div>
       <div class="frame-label" id="frameLabel">三分法 · 交点构图</div>
       <div class="guide-legend hidden" id="guideLegend">箭头表示镜头运动方向</div>
-      <div class="level-badge hidden" id="levelBadge">水平 0.0°</div>
-      <svg class="horizon hidden" id="horizonLine" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50H100"/></svg>
     </section>
 
     <div class="motion-plan hidden" id="motionPlan" aria-hidden="true">
       <canvas id="mgPlan"></canvas>
       <div class="mp-info"><b id="mpTitle">俯视机位图</b><span id="mpNote">机位沿轴线前推，主体由小变大</span></div>
     </div>
-    <section class="challenge-card hidden" id="challengeCard" aria-live="polite">
-      <div class="ch-top"><span class="ch-badge" id="chKind">景别</span><h2 id="chTitle">—</h2><span class="ch-done" id="chDone">达标 0 / 拍摄 0</span></div>
-      <p id="chDesc">—</p>
-      <div class="steps" id="chSteps"></div>
-      <div class="ch-actions">
-        <button class="ch-btn" id="chNew" type="button">换一题</button>
-        <button class="ch-btn primary" id="chShot" type="button">拍照练习</button>
-      </div>
-      <p class="ch-hint">开启相机后按要点取景拍照，拍完对照要点自评，照片会存入下方作品库。</p>
-    </section>
-
     <div class="aspect-row" role="group" aria-label="拍摄画幅">
       <span class="aspect-label">画幅</span>
       <button class="aspect-option" type="button" data-ratio="16/9" data-value="1.777778" aria-pressed="false">16:9</button>
@@ -192,9 +166,6 @@
       <button class="guide-chip" type="button" data-guide="diagonal" aria-pressed="false">对角</button>
       <button class="guide-chip" type="button" data-guide="golden" aria-pressed="false">黄金</button>
       <button class="guide-chip" type="button" data-guide="off" aria-pressed="false">关</button>
-      <button class="toggle" id="levelToggle" type="button" role="switch" aria-checked="false" aria-label="电子水平仪">
-        <span class="switch" aria-hidden="true"></span><span class="control-label">水平仪</span>
-      </button>
     </div>
 
     <div class="record-controls">
@@ -225,7 +196,7 @@
         <button class="guide-chip" type="button" data-lib="movement" aria-pressed="false">运镜</button>
       </div>
       <div class="lib-grid" id="libGrid"></div>
-      <p class="lib-empty" id="libEmpty">还没有作品。开启相机点「拍照存库」，或在挑战模式里完成练习，照片只保存在本机。</p>
+      <p class="lib-empty" id="libEmpty">还没有作品。开启相机点「拍照存库」，照片只保存在本机。</p>
     </section>
     <div class="lightbox hidden" id="lightbox" role="dialog" aria-label="作品详情">
       <div class="lb-panel">
@@ -235,17 +206,6 @@
           <button class="ch-btn primary" id="lbSave" type="button">保存到手机</button>
           <button class="ch-btn danger" id="lbDelete" type="button">删除</button>
           <button class="ch-btn" id="lbClose" type="button">关闭</button>
-        </div>
-      </div>
-    </div>
-    <div class="lightbox hidden" id="shotModal" role="dialog" aria-label="练习拍照结果">
-      <div class="lb-panel">
-        <img id="smImg" alt="练习照片">
-        <p class="lb-meta" id="smMeta"></p>
-        <div class="lb-actions stacked">
-          <button class="ch-btn primary" id="smGood" type="button">达标 · 存入作品库</button>
-          <button class="ch-btn" id="smRetry" type="button">存为待改进</button>
-          <button class="ch-btn danger" id="smDiscard" type="button">重拍（不保存）</button>
         </div>
       </div>
     </div>
@@ -326,7 +286,8 @@
       {scale:12.0,y:-86.4}    // 大特写：只取眼部局部（双眉+双眼+鼻梁）
     ];
     
-    let stream,recordingStream,recorder,chunks=[],recordedBlob,recordingUrl,drawFrame,timer,recordingCap,poseTimer,countdownTimer=0,stopByUser=false;
+    let stream,recordingStream,recorder,chunks=[],recordedBlob,recordingUrl,drawFrame,timer,recordingCap,poseTimer,countdownTimer=0,stopByUser=false,recorderStopGuard=0,finalizeRecording=null;
+    function stopRecording(){if(!recorder||recorder.state!=='recording')return;stopByUser=true;recordButton.disabled=true;recordButton.textContent='正在生成视频…';clearTimeout(recorderStopGuard);try{recorder.requestData()}catch(error){}try{recorder.stop()}catch(error){if(finalizeRecording)finalizeRecording()}recorderStopGuard=setTimeout(()=>{try{if(recorder&&recorder.state!=='inactive')recorder.stop()}catch(error){}try{recordingStream?.getTracks().forEach(track=>track.stop())}catch(error){}if(finalizeRecording)finalizeRecording()},6000)}
     const video=document.querySelector('#camera'),cameraButton=document.querySelector('#cameraButton'),recordButton=document.querySelector('#recordButton'),saveButton=document.querySelector('#saveButton'),recordStatus=document.querySelector('#recordStatus'),autoSaveToggle=document.querySelector('#autoSaveToggle');
     let autoSaveEnabled=false;try{autoSaveEnabled=localStorage.getItem('qujingke-auto-save')==='true'}catch{}
     autoSaveToggle.setAttribute('aria-checked',String(autoSaveEnabled));
@@ -1121,7 +1082,7 @@ var MG_INFO=[
       selectedLesson=lesson;
       document.querySelector('#lessonTitle').textContent=lesson.title;document.querySelector('#lessonTag').textContent=lesson.tag;document.querySelector('#lessonDescription').textContent=lesson.description;document.querySelector('#lessonSteps').replaceChildren(...lesson.steps.map(text=>{const chip=document.createElement('span');chip.className='step';chip.textContent=text;return chip}));document.querySelector('#frameLabel').textContent=lesson.label;
       const model=document.querySelector('.scene-image'),scene=document.querySelector('#placeholder'),index=banks[activeKind].indexOf(lesson),isMotion=activeKind==='movement',isComposition=activeKind==='composition';scene.dataset.kind=activeKind;
-      const liveCamera=Boolean(stream),recordedPlayback=Boolean(recordedBlob&&video.getAttribute('src'));viewfinder.classList.toggle('on-light',(activeKind==='shot'||activeKind==='challenge')&&!liveCamera&&!recordedPlayback);document.querySelector('#placeholder').classList.toggle('hidden',isMotion||liveCamera||recordedPlayback);document.querySelector('#placeholder').classList.remove('ghost');const demo=document.querySelector('#motionDemo');demo.classList.toggle('hidden',!isMotion||recordedPlayback);demo.classList.toggle('compact',isMotion&&liveCamera);document.querySelector('#cameraMessage').classList.toggle('hidden',isMotion||liveCamera||recordedPlayback);
+      const liveCamera=Boolean(stream),recordedPlayback=Boolean(recordedBlob&&video.getAttribute('src'));viewfinder.classList.toggle('on-light',activeKind==='shot'&&!liveCamera&&!recordedPlayback);document.querySelector('#placeholder').classList.toggle('hidden',isMotion||liveCamera||recordedPlayback);document.querySelector('#placeholder').classList.remove('ghost');const demo=document.querySelector('#motionDemo');demo.classList.toggle('hidden',!isMotion||recordedPlayback);demo.classList.toggle('compact',isMotion&&liveCamera);document.querySelector('#cameraMessage').classList.toggle('hidden',isMotion||liveCamera||recordedPlayback);
       const compHost=document.querySelector('#compScene');if(isComposition){renderCompScene(index);compHost.classList.remove('hidden');model.style.display='none'}else{compHost.classList.add('hidden');model.style.display=''}const nextSrc=(!isMotion&&!isComposition)?actorSrc:null;if(nextSrc&&model.getAttribute('src')!==nextSrc)model.src=nextSrc;
       if(!isMotion&&activeKind==='shot'){const f=shotFrames[index]||shotFrames[0];model.style.setProperty('--model-scale',f.scale);model.style.setProperty('--model-y',f.y.toFixed(2)+'%')}
       if(!isMotion&&activeKind!=='shot'){model.style.setProperty('--model-width','100%');model.style.setProperty('--model-height','100%');model.style.setProperty('--model-x','0%');model.style.setProperty('--model-y','0%');model.style.setProperty('--model-scale',1);model.style.setProperty('--model-origin','50%')}
@@ -1132,17 +1093,17 @@ var MG_INFO=[
       grid.classList.toggle('composition-guides',isComposition);guideSvg.innerHTML=isMotion?'':guides.composition[activeKind==='shot'?0:index];
       if(ratio>=1)guideSvg.querySelectorAll('circle,text').forEach(element=>{const x=element.getAttribute('cx')||element.getAttribute('x'),y=element.getAttribute('cy')||element.getAttribute('y');element.setAttribute('transform',`translate(${x} ${y}) scale(1 ${ratio}) translate(${-x} ${-y})`)});
     }
-    function showBank(kind){activeKind=kind;document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.kind===kind)));heading.textContent={composition:'构图练习',shot:'景别练习',movement:'镜头运动练习',challenge:'拍摄挑战'}[kind];const isCh=kind==='challenge';document.querySelector('#challengeCard').classList.toggle('hidden',!isCh);document.querySelector('.drill-heading').classList.toggle('hidden',isCh);drillList.classList.toggle('hidden',isCh);document.querySelector('.lesson').classList.toggle('hidden',isCh);document.querySelector('.note').classList.toggle('hidden',isCh);if(isCh){drillList.replaceChildren();showChallenge();return}drillList.replaceChildren(...banks[kind].map((lesson,index)=>{const button=document.createElement('button');button.type='button';button.className='drill-option';button.textContent=lesson.name;button.setAttribute('aria-pressed',String(index===0));button.addEventListener('click',()=>{drillList.querySelectorAll('.drill-option').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));showLesson(lesson);requestAnimationFrame(()=>button.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}))});return button}));showLesson(banks[kind][0]);requestAnimationFrame(()=>{const sel=drillList.querySelector('[aria-pressed="true"]');if(sel)sel.scrollIntoView({inline:'center',block:'nearest'})})}
+    function showBank(kind){activeKind=kind;document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.kind===kind)));heading.textContent={composition:'构图练习',shot:'景别练习',movement:'镜头运动练习'}[kind];drillList.replaceChildren(...banks[kind].map((lesson,index)=>{const button=document.createElement('button');button.type='button';button.className='drill-option';button.textContent=lesson.name;button.setAttribute('aria-pressed',String(index===0));button.addEventListener('click',()=>{drillList.querySelectorAll('.drill-option').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));showLesson(lesson);requestAnimationFrame(()=>button.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'}))});return button}));showLesson(banks[kind][0]);requestAnimationFrame(()=>{const sel=drillList.querySelector('[aria-pressed="true"]');if(sel)sel.scrollIntoView({inline:'center',block:'nearest'})})}
     tabs.forEach(tab=>tab.addEventListener('click',()=>{tabs.forEach(item=>item.setAttribute('aria-selected',String(item===tab)));showBank(tab.dataset.kind)}));
     showBank(activeKind);
     if(location.hash.startsWith('#mg=')){const [mi,mu]=location.hash.slice(4).split(',').map(Number);MG.fixedU=mu;showBank('movement');showLesson(banks.movement[mi]);}
     gridToggle.addEventListener('click',()=>{const visible=gridToggle.getAttribute('aria-checked')!=='true';gridToggle.setAttribute('aria-checked',String(visible));grid.classList.toggle('hidden',!visible)});
     autoSaveToggle.addEventListener('click',()=>{autoSaveEnabled=autoSaveToggle.getAttribute('aria-checked')!=='true';autoSaveToggle.setAttribute('aria-checked',String(autoSaveEnabled));try{localStorage.setItem('qujingke-auto-save',String(autoSaveEnabled))}catch{}});
-    async function saveRecording(automatic=false){if(!recordedBlob||!recordingUrl)return;const type=recordedBlob.type||'video/webm',extension=type.includes('mp4')?'mp4':'webm',file=new File([recordedBlob],`qujingke-${new Date().toISOString().replace(/[:.]/g,'-')}.${extension}`,{type});try{if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'取景课拍摄练习'});clearRecordingPreview();showLesson(selectedLesson);recordStatus.textContent='系统保存菜单已完成，取景界面已恢复。点击“开启相机”继续拍摄。'}else if(automatic){recordStatus.textContent='浏览器无法自动打开保存菜单，视频已保留；请点“保存到手机”。'}else{const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();recordStatus.textContent='视频已下载；如未自动保存，请在浏览器菜单中选择保存视频或文件。'}}catch(error){if(error.name==='AbortError'){if(automatic)recordStatus.textContent='保存菜单已关闭，视频仍保留；如需保存，请点“保存到手机”。'}else if(automatic)recordStatus.textContent='浏览器未允许自动打开保存菜单，视频已保留；请点“保存到手机”。';else recordStatus.textContent='保存未完成，请重试或从视频播放菜单选择保存。'}}
+    async function saveRecording(automatic=false){if(!recordedBlob||!recordingUrl)return;const type=recordedBlob.type||'video/webm',extension=type.includes('mp4')?'mp4':'webm',file=new File([recordedBlob],`qujingke-${new Date().toISOString().replace(/[:.]/g,'-')}.${extension}`,{type});try{if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'取景课拍摄练习'});clearRecordingPreview();showLesson(selectedLesson);recordStatus.textContent='系统保存菜单已完成，取景界面已恢复。点击“开启相机”继续拍摄。'}else if(automatic){const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();setTimeout(()=>{clearRecordingPreview();showLesson(selectedLesson)},2000);recordStatus.textContent='视频已自动保存（浏览器下载）；如未看到文件，请点“保存到手机”重新保存。'}else{const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();recordStatus.textContent='视频已下载；如未自动保存，请在浏览器菜单中选择保存视频或文件。'}}catch(error){if(error.name==='AbortError'){if(automatic)recordStatus.textContent='保存菜单已关闭，视频仍保留；如需保存，请点“保存到手机”。'}else if(automatic)recordStatus.textContent='浏览器未允许自动打开保存菜单，视频已保留；请点“保存到手机”。';else recordStatus.textContent='保存未完成，请重试或从视频播放菜单选择保存。'}}
     function clearRecordingPreview(){if(recordingUrl)URL.revokeObjectURL(recordingUrl);recordingUrl=null;recordedBlob=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.style.display='none';video.controls=false;video.muted=true;video.load();saveButton.classList.add('hidden');cameraButton.disabled=false;cameraButton.textContent='开启相机';recordButton.disabled=true;recordButton.setAttribute('aria-pressed','false');recordButton.textContent='开始录制';aspectOptions.forEach(option=>option.disabled=false)}
-    cameraButton.addEventListener('click',async()=>{const message=document.querySelector('#cameraMessage');if(stream){stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;video.style.display='none';if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden','compact');message.classList.add('hidden')}else{document.querySelector('#placeholder').classList.remove('hidden');message.classList.remove('hidden')}cameraButton.textContent='开启相机';viewfinder.classList.toggle('on-light',activeKind==='shot'||activeKind==='challenge');document.querySelector('#placeholder').classList.remove('ghost');photoButton.disabled=true;if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden')}photoButton.disabled=true;recordButton.disabled=true;recordStatus.textContent='相机已关闭。视频只在本机处理，保存时不会上传。';return}if(!navigator.mediaDevices?.getUserMedia){message.textContent='当前环境无法访问相机，请用 HTTPS 地址在手机浏览器中打开';message.classList.remove('hidden');return}cameraButton.disabled=true;try{const nextStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:true});clearRecordingPreview();stream=nextStream;video.srcObject=stream;video.controls=false;video.style.display='block';document.querySelector('#placeholder').classList.toggle('hidden',activeKind!=='challenge');document.querySelector('#placeholder').classList.toggle('ghost',activeKind==='challenge'&&chTask&&(chTask.k==='shot'||chTask.k==='composition'));if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden');document.querySelector('#motionDemo').classList.add('compact')}else document.querySelector('#motionDemo').classList.add('hidden');viewfinder.classList.remove('on-light');message.classList.add('hidden');cameraButton.textContent='关闭相机';recordButton.disabled=false;photoButton.disabled=false;recordStatus.textContent='相机和麦克风已准备好，点击“开始录制”开始拍摄。'}catch(error){message.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':'暂时无法开启相机，请检查设备相机是否可用';message.classList.remove('hidden');recordStatus.textContent=message.textContent}finally{cameraButton.disabled=false}});
+    cameraButton.addEventListener('click',async()=>{const message=document.querySelector('#cameraMessage');if(stream){stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;video.style.display='none';if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden','compact');message.classList.add('hidden')}else{document.querySelector('#placeholder').classList.remove('hidden');message.classList.remove('hidden')}cameraButton.textContent='开启相机';viewfinder.classList.toggle('on-light',activeKind==='shot');document.querySelector('#placeholder').classList.remove('ghost');photoButton.disabled=true;if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden')}photoButton.disabled=true;recordButton.disabled=true;recordStatus.textContent='相机已关闭。视频只在本机处理，保存时不会上传。';return}if(!navigator.mediaDevices?.getUserMedia){message.textContent='当前环境无法访问相机，请用 HTTPS 地址在手机浏览器中打开';message.classList.remove('hidden');return}cameraButton.disabled=true;try{const nextStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:true});clearRecordingPreview();stream=nextStream;video.srcObject=stream;video.controls=false;video.style.display='block';document.querySelector('#placeholder').classList.add('hidden');if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden');document.querySelector('#motionDemo').classList.add('compact')}else document.querySelector('#motionDemo').classList.add('hidden');viewfinder.classList.remove('on-light');message.classList.add('hidden');cameraButton.textContent='关闭相机';recordButton.disabled=false;photoButton.disabled=false;recordStatus.textContent='相机和麦克风已准备好，点击“开始录制”开始拍摄。'}catch(error){message.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':'暂时无法开启相机，请检查设备相机是否可用';message.classList.remove('hidden');recordStatus.textContent=message.textContent}finally{cameraButton.disabled=false}});
 async function rasterizeGuides(w,h){try{const svg=document.querySelector('#guideSvg');if(!svg||grid.classList.contains('hidden'))return null;const inner=svg.innerHTML.trim();if(!inner)return null;const style='.guide-line{fill:none;stroke:#f5f7ee;stroke-width:1.4}.guide-accent{fill:none;stroke:#d8f6a4;stroke-width:2.4}.guide-area{fill:#d8f6a4;fill-opacity:.18;stroke:#d8f6a4;stroke-width:2}.guide-dot{fill:#d8f6a4;fill-opacity:.9}.guide-dash{stroke-dasharray:3 2}.guide-text{fill:#fff;font-size:5px;font-weight:700;paint-order:stroke;stroke:#101411;stroke-width:1.4;stroke-linejoin:round}';const src=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${w}" height="${h}" preserveAspectRatio="none"><style>${style}</style>${inner}</svg>`;const url=URL.createObjectURL(new Blob([src],{type:'image/svg+xml'}));const img=new Image();img.src=url;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject});const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);return c}catch(error){return null}}
-        recordButton.addEventListener('click',()=>{if(recorder?.state==='recording'){stopByUser=true;recordButton.disabled=true;recordButton.textContent='正在生成视频…';recorder.stop();return}if(!stream||typeof MediaRecorder==='undefined'){recordStatus.textContent='此浏览器暂不支持视频录制。请使用较新的 Safari 或 Chrome。';return}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden');recordButton.disabled=false;recordButton.textContent='开始录制';recordStatus.textContent='已取消倒计时，可重新开始录制。';return}recordButton.disabled=false;recordButton.textContent='取消';let count=3;const cd=document.querySelector('#countdown');cd.textContent='3';cd.classList.remove('hidden');recordStatus.textContent='3 秒后开始录制…';countdownTimer=setInterval(()=>{count--;if(count>0){cd.textContent=String(count);recordStatus.textContent=count+' 秒后开始录制…'}else{clearInterval(countdownTimer);countdownTimer=0;cd.classList.add('hidden');beginRecording()}},1000)});async function beginRecording(){recordButton.disabled=true;recordStatus.textContent='正在检查音频轨道并准备录制。';try{const audioTracks=stream.getAudioTracks().filter(track=>track.readyState==='live'&&track.enabled);if(!audioTracks.length)throw new Error('No live microphone track');const ratio=Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value);const canvas=document.createElement('canvas');canvas.width=ratio>=1?1080:Math.round(1080*ratio);canvas.height=ratio>=1?Math.round(1080/ratio):1080;const context=canvas.getContext('2d');let guideLayer=null;try{guideLayer=await rasterizeGuides(canvas.width,canvas.height)}catch(error){guideLayer=null}let lastDrawTs=0;const draw=ts=>{if(ts-lastDrawTs>=31){lastDrawTs=ts;if(video.readyState>=2){const sourceRatio=video.videoWidth/video.videoHeight;let sx=0,sy=0,sw=video.videoWidth,sh=video.videoHeight;if(sourceRatio>ratio){sw=sh*ratio;sx=(video.videoWidth-sw)/2}else{sh=sw/ratio;sy=(video.videoHeight-sh)/2}context.drawImage(video,sx,sy,sw,sh,0,0,canvas.width,canvas.height);if(guideLayer)context.drawImage(guideLayer,0,0)}}drawFrame=requestAnimationFrame(draw)};draw();const canvasStream=canvas.captureStream(30);recordingStream=new MediaStream([...canvasStream.getVideoTracks(),...audioTracks]);const mimeType=['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4','video/webm;codecs=vp8,opus','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));recorder=new MediaRecorder(recordingStream,mimeType?{mimeType}:undefined);chunks=[];recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};recorder.onstop=()=>{cancelAnimationFrame(drawFrame);clearInterval(timer);clearTimeout(recordingCap);aspectOptions.forEach(option=>option.disabled=false);const type=recorder.mimeType||'video/webm';recordedBlob=new Blob(chunks,{type});if(!recordedBlob.size){stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream?.getTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent='没有生成视频，请重试。';recordButton.disabled=false;recordButton.textContent='开始录制';cameraButton.disabled=false;return}recordingUrl=URL.createObjectURL(recordedBlob);document.querySelector('#motionDemo').classList.add('hidden');video.pause();video.srcObject=null;video.src=recordingUrl;video.controls=true;video.muted=false;video.style.display='block';stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream?.getTracks().forEach(track=>track.stop());recordingStream=null;cameraButton.textContent='重新开启相机';cameraButton.disabled=false;document.querySelector('#placeholder').classList.add('hidden');document.querySelector('#cameraMessage').classList.add('hidden');recordButton.setAttribute('aria-pressed','false');recordButton.disabled=true;recordButton.textContent='开始录制';saveButton.classList.remove('hidden');recordStatus.textContent='录制完成。点击“保存到手机”并在系统面板中选择保存位置。';if(autoSaveEnabled&&stopByUser)void saveRecording(true);stopByUser=false};recorder.start(1000);stopByUser=false;aspectOptions.forEach(option=>option.disabled=true);recordButton.setAttribute('aria-pressed','true');recordButton.textContent='结束录制';cameraButton.disabled=true;recordButton.disabled=false;const started=Date.now();timer=setInterval(()=>{const seconds=Math.floor((Date.now()-started)/1000);recordStatus.textContent=`正在录制 · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`},500);recordingCap=setTimeout(()=>{if(recorder?.state==='recording'){stopByUser=true;recordButton.disabled=true;recordButton.textContent='正在生成视频…';recordStatus.textContent='已达最长录制时长 10 分钟，正在生成视频…';recorder.stop()}},600000)}catch(error){cancelAnimationFrame(drawFrame);clearInterval(timer);clearTimeout(recordingCap);recordingStream?.getVideoTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':error.message==='No live microphone track'?'没有检测到可用麦克风音轨，请重新开启相机并检查麦克风权限':'无法启动录制，请检查浏览器是否支持摄像头录制';recordButton.disabled=false;recordButton.textContent='开始录制';aspectOptions.forEach(option=>option.disabled=false)}finally{if(recorder?.state!=='recording')cameraButton.disabled=false}}
+        recordButton.addEventListener('click',()=>{if(recorder?.state==='recording'){stopRecording();return}if(!stream||typeof MediaRecorder==='undefined'){recordStatus.textContent='此浏览器暂不支持视频录制。请使用较新的 Safari 或 Chrome。';return}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden');recordButton.disabled=false;recordButton.textContent='开始录制';recordStatus.textContent='已取消倒计时，可重新开始录制。';return}recordButton.disabled=false;recordButton.textContent='取消';let count=3;const cd=document.querySelector('#countdown');cd.textContent='3';cd.classList.remove('hidden');recordStatus.textContent='3 秒后开始录制…';countdownTimer=setInterval(()=>{count--;if(count>0){cd.textContent=String(count);recordStatus.textContent=count+' 秒后开始录制…'}else{clearInterval(countdownTimer);countdownTimer=0;cd.classList.add('hidden');beginRecording()}},1000)});async function beginRecording(){recordButton.disabled=true;recordStatus.textContent='正在检查音频轨道并准备录制。';try{const audioTracks=stream.getAudioTracks().filter(track=>track.readyState==='live'&&track.enabled);if(!audioTracks.length)throw new Error('No live microphone track');const ratio=Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value);const canvas=document.createElement('canvas');canvas.width=ratio>=1?1080:Math.round(1080*ratio);canvas.height=ratio>=1?Math.round(1080/ratio):1080;const context=canvas.getContext('2d');let guideLayer=null;try{guideLayer=await rasterizeGuides(canvas.width,canvas.height)}catch(error){guideLayer=null}let lastDrawTs=0;const draw=ts=>{if(ts-lastDrawTs>=31){lastDrawTs=ts;if(video.readyState>=2){const sourceRatio=video.videoWidth/video.videoHeight;let sx=0,sy=0,sw=video.videoWidth,sh=video.videoHeight;if(sourceRatio>ratio){sw=sh*ratio;sx=(video.videoWidth-sw)/2}else{sh=sw/ratio;sy=(video.videoHeight-sh)/2}context.drawImage(video,sx,sy,sw,sh,0,0,canvas.width,canvas.height);if(guideLayer)context.drawImage(guideLayer,0,0)}}drawFrame=requestAnimationFrame(draw)};draw();const canvasStream=canvas.captureStream(30);recordingStream=new MediaStream([...canvasStream.getVideoTracks(),...audioTracks]);const mimeType=['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4','video/webm;codecs=vp8,opus','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));recorder=new MediaRecorder(recordingStream,mimeType?{mimeType}:undefined);chunks=[];recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};let finalized=false;finalizeRecording=()=>{if(finalized)return;finalized=true;clearTimeout(recorderStopGuard);cancelAnimationFrame(drawFrame);clearInterval(timer);clearTimeout(recordingCap);aspectOptions.forEach(option=>option.disabled=false);const type=recorder.mimeType||'video/webm';recordedBlob=new Blob(chunks,{type});chunks=[];if(!recordedBlob.size){stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream?.getTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent='没有生成视频，请重试。';recordButton.disabled=false;recordButton.textContent='开始录制';cameraButton.disabled=false;return}recordingUrl=URL.createObjectURL(recordedBlob);document.querySelector('#motionDemo').classList.add('hidden');video.pause();video.srcObject=null;video.src=recordingUrl;video.controls=true;video.muted=false;video.style.display='block';stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream?.getTracks().forEach(track=>track.stop());recordingStream=null;cameraButton.textContent='重新开启相机';cameraButton.disabled=false;document.querySelector('#placeholder').classList.add('hidden');document.querySelector('#cameraMessage').classList.add('hidden');recordButton.setAttribute('aria-pressed','false');recordButton.disabled=true;recordButton.textContent='开始录制';saveButton.classList.remove('hidden');recordStatus.textContent='录制完成，正在自动保存到手机…';if(stopByUser)void saveRecording(true);stopByUser=false};recorder.onstop=()=>finalizeRecording();recorder.start(1000);stopByUser=false;aspectOptions.forEach(option=>option.disabled=true);recordButton.setAttribute('aria-pressed','true');recordButton.textContent='结束录制';cameraButton.disabled=true;recordButton.disabled=false;const started=Date.now();timer=setInterval(()=>{const seconds=Math.floor((Date.now()-started)/1000);recordStatus.textContent=`正在录制 · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`},500);recordingCap=setTimeout(()=>{if(recorder?.state==='recording'){recordStatus.textContent='已达最长录制时长 10 分钟，正在生成视频…';stopRecording()}},600000)}catch(error){cancelAnimationFrame(drawFrame);clearInterval(timer);clearTimeout(recordingCap);recordingStream?.getVideoTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':error.message==='No live microphone track'?'没有检测到可用麦克风音轨，请重新开启相机并检查麦克风权限':'无法启动录制，请检查浏览器是否支持摄像头录制';recordButton.disabled=false;recordButton.textContent='开始录制';aspectOptions.forEach(option=>option.disabled=false)}finally{if(recorder?.state!=='recording')cameraButton.disabled=false}}
     saveButton.addEventListener('click',()=>void saveRecording());
     window.addEventListener('pagehide',()=>{clearInterval(poseTimer);if(recorder?.state==='recording')recorder.stop();stream?.getTracks().forEach(track=>track.stop());recordingStream?.getTracks().forEach(track=>track.stop());if(recordingUrl)URL.revokeObjectURL(recordingUrl)});
 (function(){
@@ -1159,7 +1120,7 @@ async function rasterizeGuides(w,h){try{const svg=document.querySelector('#guide
       close.addEventListener('click',dismiss);
       if(!dismissed&&!standalone&&isIOS&&!deferredPrompt)show();
     })();
-    /* ================= 取景器增强：参考线样式 + 电子水平仪 ================= */
+    /* ================= 取景器增强：参考线样式 ================= */
     function currentRatio(){return Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value)}
     const guideSvgEl=document.querySelector('#guideSvg');
     let guideOverride='lesson';
@@ -1181,87 +1142,9 @@ async function rasterizeGuides(w,h){try{const svg=document.querySelector('#guide
     }
     const guideChips=[...document.querySelectorAll('.guide-chip[data-guide]')];
     guideChips.forEach(chip=>chip.addEventListener('click',()=>{guideOverride=chip.dataset.guide;guideChips.forEach(c=>c.setAttribute('aria-pressed',String(c===chip)));applyGuideOverride()}));
-    const levelToggle=document.querySelector('#levelToggle'),levelBadge=document.querySelector('#levelBadge'),horizonLine=document.querySelector('#horizonLine');
-    let levelOn=false;
-    function levelRoll(e){const angle=(screen.orientation&&screen.orientation.angle)||0;const beta=e.beta||0,gamma=e.gamma||0;if(angle===90)return beta;if(angle===270)return -beta;if(angle===180)return -gamma;return gamma}
-    let levelRaf=0,levelLast=0;
-    function onOrient(e){
-      if(e.beta===null&&e.gamma===null)return;
-      levelLast=levelRoll(e);
-      if(levelRaf)return;
-      levelRaf=requestAnimationFrame(()=>{
-        levelRaf=0;
-        const roll=levelLast,ok=Math.abs(roll)<2;
-        levelBadge.textContent=(ok?'水平 ':'倾斜 ')+Math.abs(roll).toFixed(1)+'°';
-        levelBadge.classList.toggle('ok',ok);
-        horizonLine.style.transform='rotate('+(-roll)+'deg)';
-      });
-    }
-    levelToggle.addEventListener('click',async()=>{
-      levelOn=!levelOn;levelToggle.setAttribute('aria-checked',String(levelOn));
-      levelBadge.classList.toggle('hidden',!levelOn);horizonLine.classList.toggle('hidden',!levelOn);
-      if(!levelOn){window.removeEventListener('deviceorientation',onOrient);return}
-      try{
-        if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
-          const st=await DeviceOrientationEvent.requestPermission();if(st!=='granted')throw 0;
-        }
-      }catch(error){
-        levelOn=false;levelToggle.setAttribute('aria-checked','false');
-        levelBadge.textContent='无法获取姿态（需在设置中允许动作与方向访问）';levelBadge.classList.remove('ok');
-        return;
-      }
-      window.addEventListener('deviceorientation',onOrient);
-      levelBadge.textContent='等待姿态数据…';
-    });
 
-    /* ================= 拍摄挑战 ================= */
-    const CH_TASKS=[
-      {k:'shot',i:0,t:'远景 · 用环境交代地点',d:'把人物拍成画面高度的约四分之一，让周围环境说明“在哪里”。',steps:['人物约占画高 1/4','头顶与脚下留出空间','地平线尽量放平']},
-      {k:'shot',i:2,t:'中景 · 卡在膝盖',d:'画框下沿卡在膝盖附近，突出肢体语言，裙摆边缘刚好入画。',steps:['下沿卡在膝盖','头顶留少量空间','手部姿态完整']},
-      {k:'shot',i:3,t:'中近景 · 卡在腰部',d:'画框下沿卡在腰部，人物表情与上身姿态成为重点。',steps:['下沿卡在腰线','肩膀不要顶到边','眼神方向留白']},
-      {k:'shot',i:5,t:'特写 · 卡在肩部',d:'画框下沿卡在肩膀，面部表情与情绪占满画面。',steps:['下沿卡在肩线','眼睛靠近上三分线','背景尽量简洁']},
-      {k:'composition',i:0,t:'三分法 · 交点站位',d:'让人物落在竖分割线附近，眼睛靠近上横线。',steps:['人物靠近左/右竖线','眼睛接近上三分线','视线方向留白']},
-      {k:'composition',i:3,t:'对角线 · 动势构图',d:'让人物或肢体延展方向沿对角线分布，画面更有动感。',steps:['主体沿对角线安排','运动方向前方留白','重心稳住不歪斜']},
-      {k:'composition',i:5,t:'框架 · 画中画',d:'利用门窗、拱门等自然框架，把主体放进“框”里。',steps:['先找到框架','主体落在框内','前景别挡住脸']},
-      {k:'composition',i:6,t:'前景 · 层次构图',d:'镜头前保留近处物体当前景，画面立刻有层次。',steps:['前景贴近镜头边缘','主体保持清晰','前景遮挡别过头']},
-      {k:'movement',i:0,t:'推镜头 · 5 秒匀速',d:'机位沿直线匀速前推 5 秒，主体由小变大，注意起幅与落幅。',steps:['起幅停 1 秒再动','全程匀速不忽快忽慢','落幅停 1 秒收尾']},
-      {k:'movement',i:2,t:'摇镜头 · 水平扫动',d:'脚不动，云台匀速水平摇 5 秒，画面里要出现新信息。',steps:['双脚站位固定','摇速均匀','结束时停稳']},
-      {k:'movement',i:4,t:'跟镜头 · 同速同行',d:'与人物同速同向移动，人物在画面中保持稳定。',steps:['与主体保持固定距离','人物位置保持稳定','观察背景流动']},
-      {k:'movement',i:7,t:'环绕 · 绕人转弧',d:'绕人物走一段弧线并持续对准主体。',steps:['步子小而匀','主体保持在画面中心','注意脚下安全']}
-    ];
+    /* ================= 拍照存库（公共） ================= */
     const CH_KIND_NAME={shot:'景别',composition:'构图',movement:'运镜'};
-    const chCard=document.querySelector('#challengeCard');
-    let chTask=null,chBusy=false;
-    function chStats(){try{return JSON.parse(localStorage.getItem('fp-challenge-stats'))||{good:0,total:0}}catch(error){return{good:0,total:0}}}
-    function chSaveStats(st){try{localStorage.setItem('fp-challenge-stats',JSON.stringify(st))}catch(error){}}
-    function chPick(){let next;do{next=CH_TASKS[Math.floor(Math.random()*CH_TASKS.length)]}while(chTask&&next.t===chTask.t);chTask=next;chRender()}
-    function chRender(){
-      const t=chTask;
-      document.querySelector('#chKind').textContent=CH_KIND_NAME[t.k];
-      document.querySelector('#chTitle').textContent=t.t;
-      document.querySelector('#chDesc').textContent=t.d;
-      document.querySelector('#chSteps').replaceChildren(...t.steps.map(x=>{const sp=document.createElement('span');sp.className='step';sp.textContent=x;return sp}));
-      const st=chStats();document.querySelector('#chDone').textContent='达标 '+st.good+' / 拍摄 '+st.total;
-      const model=document.querySelector('.scene-image'),scene=document.querySelector('#placeholder');
-      mgStop();document.querySelector('#compScene').classList.add('hidden');model.style.display='';
-      if(t.k==='shot'){
-        const f=shotFrames[t.i]||shotFrames[0];
-        if(model.getAttribute('src')!==actorSrc)model.src=actorSrc;
-        model.style.setProperty('--model-scale',f.scale);model.style.setProperty('--model-y',f.y.toFixed(2)+'%');model.style.setProperty('--model-x','0%');
-      }else if(t.k==='composition'){
-        renderCompScene(t.i);
-        document.querySelector('#compScene').classList.remove('hidden');
-        model.style.display='none';
-      }
-      const live=Boolean(stream);
-      scene.classList.remove('hidden');scene.classList.toggle('ghost',live&&(t.k==='shot'||t.k==='composition'));
-      document.querySelector('#motionDemo').classList.add('hidden');
-      document.querySelector('#motionPlan').classList.add('hidden');
-      guideSvgEl.innerHTML=t.k==='composition'?(guides.composition[t.i]||''):(t.k==='shot'?guideThirds():'');
-    }
-    function showChallenge(){chCard.classList.remove('hidden');if(!chTask)chPick();else chRender()}
-    document.querySelector('#chNew').addEventListener('click',chPick);
-    function waitVideoReady(){return new Promise((resolve,reject)=>{const t0=Date.now();(function poll(){if(video.videoWidth>0)return resolve();if(Date.now()-t0>9000)return reject(new Error('timeout'));setTimeout(poll,150)})()})}
     function capturePhotoBlob(){
       const vw=video.videoWidth,vh=video.videoHeight;if(!vw||!vh)return null;
       const r=currentRatio();let sw=vw,sh=vh;
@@ -1271,46 +1154,6 @@ async function rasterizeGuides(w,h){try{const svg=document.querySelector('#guide
       c.getContext('2d').drawImage(video,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,c.width,c.height);
       return new Promise(resolve=>c.toBlob(b=>resolve(b),'image/jpeg',.85));
     }
-    document.querySelector('#chShot').addEventListener('click',async()=>{
-      if(chBusy)return;chBusy=true;
-      const status=document.querySelector('#recordStatus');
-      try{
-        if(!stream){status.textContent='正在开启相机…';cameraButton.click();await waitVideoReady()}
-        const blob=await capturePhotoBlob();
-        if(!blob)throw 0;
-        openShotModal(blob);
-      }catch(error){status.textContent='拍照未成功：请确认相机已开启并重试。'}
-      chBusy=false;
-    });
-    const shotModal=document.querySelector('#shotModal');let shotPending=null;
-    function openShotModal(blob){
-      shotPending={blob};
-      document.querySelector('#smImg').src=URL.createObjectURL(blob);
-      document.querySelector('#smMeta').textContent=chTask.t+' · '+CH_KIND_NAME[chTask.k]+' · '+new Date().toLocaleString();
-      shotModal.classList.remove('hidden');
-    }
-    function closeShotModal(){
-      const img=document.querySelector('#smImg');
-      if(img.getAttribute('src'))URL.revokeObjectURL(img.getAttribute('src'));
-      img.removeAttribute('src');
-      shotPending=null;shotModal.classList.add('hidden');
-    }
-    async function saveShot(rating){
-      if(!shotPending)return;
-      try{
-        await libAdd({kind:chTask.k,title:chTask.t,rating,blob:shotPending.blob});
-      }catch(error){
-        document.querySelector('#recordStatus').textContent='保存失败：手机存储空间可能已满，可先删除一些作品再试。';
-        return;
-      }
-      const st=chStats();st.total++;if(rating==='good')st.good++;chSaveStats(st);
-      document.querySelector('#chDone').textContent='达标 '+st.good+' / 拍摄 '+st.total;
-      closeShotModal();
-      document.querySelector('#recordStatus').textContent='已存入作品库，可在下方查看。';
-    }
-    document.querySelector('#smGood').addEventListener('click',()=>saveShot('good'));
-    document.querySelector('#smRetry').addEventListener('click',()=>saveShot('retry'));
-    document.querySelector('#smDiscard').addEventListener('click',closeShotModal);
 
     /* ================= 作品库（IndexedDB） ================= */
     const LIB_DB='qujingke-lib',LIB_STORE='photos';
