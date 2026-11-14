@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101411">
+  <meta name="description" content="用手机练习短视频景别、构图与镜头运动。">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="取景课">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+  <title>取景课 · 短视频拍摄练习</title>
+  <style>
+    :root{color-scheme:dark;--bg:#101411;--panel:#191f1a;--muted:#a1aaa1;--lime:#c6f36a;--line:#ffffffa6}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f3f5ef;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100dvh}
+    button{font:inherit;color:inherit;border:0;cursor:pointer}.app{max-width:560px;margin:auto;padding:env(safe-area-inset-top) 18px calc(24px + env(safe-area-inset-bottom))}
+    header{height:64px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:750;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:.12em}.pill{border:1px solid #39423a;border-radius:99px;padding:7px 11px;color:var(--muted);font-size:12px}
+    h1{font-size:26px;line-height:1.2;margin:12px 0 7px;letter-spacing:-.03em}.sub{margin:0 0 18px;color:var(--muted);font-size:13px}
+    .viewfinder{position:relative;overflow:hidden;border-radius:22px;background:#ffffff;width:var(--frame-width,100%);height:var(--frame-height,auto);aspect-ratio:var(--frame-ratio,9/16);margin:0 auto;display:grid;place-items:center;transition:width .18s ease,height .18s ease}
+    .comp-scene{position:absolute;inset:0}#placeholder.ghost .comp-scene .cs-art{display:none}.comp-scene svg{display:block;width:100%;height:100%;filter:saturate(1.08) contrast(1.06)}.comp-scene.hidden{display:none}
+    /* 白底取景框：参考线换成深色，避免看不清 */
+    .viewfinder.on-light .guide-line{stroke:#5f6f63;opacity:.5}
+    .viewfinder.on-light .guide-accent{stroke:#2f7d4f;opacity:.8}
+    .viewfinder.on-light .guide-area{fill:#2f7d4f;fill-opacity:.1;stroke:#2f7d4f}
+    .viewfinder.on-light .guide-text{fill:#22301f;stroke:#ffffff}
+    html,body{overflow-x:hidden;max-width:100%}
+    .motion-demo{background:#eaf0ea}
+    .mg-canvas{display:block;width:100%;height:100%}
+    .motion-plan{display:flex;align-items:center;gap:12px;margin-top:10px;padding:10px 12px;border:1px solid #303a31;border-radius:14px;background:#141a15}
+    .motion-plan canvas{flex:0 0 auto;display:block;width:152px;height:106px}
+    .mp-info{display:flex;flex-direction:column;gap:5px;min-width:0}
+    .mp-info b{font-size:12.5px;font-weight:600;color:#d8f6a4;letter-spacing:.02em}
+    .mp-info span{font-size:11.5px;line-height:1.55;color:#93a996}
+    .motion-plan.hidden{display:none}
+    #camera{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.scene{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}.scene-image{width:var(--model-width,100%);height:var(--model-height,100%);object-fit:contain;object-position:center;transform:translate(var(--model-x,0%),var(--model-y,0%)) scale(var(--model-scale,1));transform-origin:center var(--model-origin,50%);transition:transform .3s ease;}.scene[data-kind="shot"] .scene-image{position:absolute;top:0;left:50%;height:100%;width:auto;max-width:none;object-fit:contain;transform:translate(-50%,var(--model-y,0%)) scale(var(--model-scale,1));transform-origin:50% 0%}
+    .motion-demo{position:absolute;inset:0;z-index:1;overflow:hidden;background:#183239;color:#f4f7f0}
+    .motion-demo{isolation:isolate}
+    
+    
+    
+    
+    
+
+
+    
+    
+    
+    .grid{position:absolute;inset:0;pointer-events:none;opacity:.9}.guide-svg{display:block;width:100%;height:100%}.guide-line{fill:none;stroke:#f5f7ee;stroke-width:.55;vector-effect:non-scaling-stroke}.guide-accent{fill:none;stroke:var(--lime);stroke-width:.8;vector-effect:non-scaling-stroke}.grid.composition-guides .guide-line,.grid.composition-guides .guide-accent{stroke:#d8f6a4;stroke-width:1.2}.grid.composition-guides .guide-area{fill:#d8f6a4;fill-opacity:.18;stroke:#d8f6a4;stroke-width:1.2}.grid.composition-guides .guide-text{fill:#d8f6a4}.guide-dash{stroke-dasharray:3 2}.guide-area{fill:var(--lime);fill-opacity:.1;stroke:var(--lime);stroke-width:.6;vector-effect:non-scaling-stroke}.guide-dot{fill:var(--lime);fill-opacity:.9}.guide-arrow{fill:none;stroke:var(--lime);stroke-width:1.5;vector-effect:non-scaling-stroke}.guide-text{fill:#fff;font-size:5px;font-weight:700;paint-order:stroke;stroke:#101411;stroke-width:1.4px;stroke-linejoin:round}
+    .frame-label{display:none;position:absolute;top:13px;left:14px;background:#101411aa;border-radius:99px;padding:6px 10px;font-size:11px;backdrop-filter:blur(8px)}.guide-legend{position:absolute;bottom:13px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#101411d9;border:1px solid #c6f36a66;border-radius:99px;padding:5px 9px;color:#e7f3d5;font-size:10px}.permission{position:absolute;inset:auto 16px 16px;text-align:center;color:#fff;background:#101411c9;border-radius:14px;padding:11px;font-size:12px}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;margin:12px 1px 18px}.toggle{display:flex;align-items:center;gap:9px;background:transparent;padding:4px 0}.switch{width:42px;height:24px;background:#414941;border-radius:99px;padding:3px;transition:.2s}.switch:after{content:"";display:block;width:18px;height:18px;border-radius:50%;background:white;transition:.2s}.toggle[aria-checked="true"] .switch{background:var(--lime)}.toggle[aria-checked="true"] .switch:after{transform:translateX(18px);background:#1b2415}.control-label{font-size:13px}.camera-btn{background:var(--lime);color:#17200e;padding:9px 13px;border-radius:99px;font-size:12px;font-weight:700}.camera-btn:disabled{opacity:.55}
+    .aspect-row{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:14px 0 2px;scrollbar-width:none}.aspect-row::-webkit-scrollbar{display:none}.aspect-label{font-size:12px;color:var(--muted);margin-right:2px;flex:0 0 auto}.aspect-option{padding:7px 11px;border:1px solid #343d35;border-radius:99px;background:#1a211b;color:#bac2b8;font-size:12px;white-space:nowrap}.aspect-option[aria-pressed="true"]{background:#d8f6a4;border-color:#d8f6a4;color:#202b16;font-weight:700}
+    .record-controls{display:flex;gap:9px;margin:0 1px 6px}.record-btn,.save-btn{flex:1;padding:11px 12px;border-radius:12px;font-size:13px;font-weight:700}.record-btn{background:#303a30;color:#f5f6f2}.record-btn:disabled{opacity:.45}.record-btn[aria-pressed="true"]{background:#d94a45;color:white}.save-btn{background:var(--lime);color:#18210f}.record-status{min-height:18px;margin:5px 2px 18px;color:var(--muted);font-size:11px}
+    .auto-save-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 2px 8px;padding:10px 12px;border:1px solid #303d33;border-radius:12px;background:#19211b}.auto-save-copy{display:grid;gap:2px}.auto-save-copy strong{font-size:12px}.auto-save-copy small{color:var(--muted);font-size:10px;line-height:1.4}
+    .section-head{display:flex;align-items:baseline;justify-content:space-between;margin:6px 0 10px}.section-head strong{font-size:17px}.section-head span{font-size:11px;color:var(--muted)}.tabs{display:flex;gap:8px;margin-bottom:10px}.tab{padding:8px 13px;border-radius:99px;background:#202720;color:var(--muted);font-size:12px}.tab[aria-selected="true"]{background:#d8f6a4;color:#202b16;font-weight:700}
+    .drill-heading{display:flex;justify-content:space-between;align-items:center;margin:1px 1px 8px;color:var(--muted);font-size:11px}.drill-list{display:flex;flex-wrap:wrap;gap:7px;padding:0 0 11px}.drill-list::-webkit-scrollbar{display:none}.drill-option{flex:0 0 auto;padding:7px 11px;border:1px solid #343d35;border-radius:99px;background:#1a211b;color:#bac2b8;font-size:12px;white-space:nowrap}.drill-option[aria-pressed="true"]{background:#d8f6a4;border-color:#d8f6a4;color:#202b16;font-weight:700}
+    .lesson{background:var(--panel);border:1px solid #2a332b;border-radius:18px;padding:16px}.lesson-top{display:flex;align-items:center;justify-content:space-between}.lesson h2{font-size:17px;margin:0}.tag{color:var(--lime);font-size:11px}.lesson p{color:#bdc5ba;font-size:13px;margin:10px 0 14px}.steps{display:flex;gap:7px;flex-wrap:wrap}.step{background:#252d26;color:#d7ded3;border-radius:8px;padding:6px 9px;font-size:11px}
+    .note{font-size:11px;color:#8d978c;margin:14px 2px 0}.hidden{display:none!important}
+    @media(min-width:600px){.app{padding-top:20px}}.motion-demo.compact{inset:10px auto auto 10px;width:38%;height:39%;border:1px solid #eff4d899;border-radius:14px;box-shadow:0 5px 20px #07191c77}@media(prefers-reduced-motion:reduce){.mg-cloud,.mg-sun{animation:none!important}}
+
+    header{height:72px}.brand{font-size:19px}.brand small{font-size:10px;letter-spacing:.18em;margin-top:3px}.pill{border-color:#354037;color:#c3cdc3;font-size:11px;padding:6px 10px}
+    h1{font-size:24px;line-height:1.35;margin:12px 0 8px;letter-spacing:-.02em}.sub{font-size:14px;line-height:1.6;margin-bottom:24px;color:#acb9ad}
+    .section-head{margin:0 0 12px}.section-head strong{font-size:14px}.section-head span{font-size:11px;color:#a1aea2}
+    .tabs{gap:4px;background:#1a211c;border:1px solid #303a32;border-radius:14px;padding:4px;margin-bottom:14px}.tab{flex:1;min-height:44px;border-radius:10px;background:transparent;padding:8px;font-size:14px;font-weight:600;color:#b0bcb1}.tab[aria-selected="true"]{background:#d8f6a4;color:#202b16;box-shadow:0 2px 6px #0002}
+    .drill-heading{font-size:12px;margin:0 2px 8px}.drill-list{gap:8px;padding:0 0 16px;margin-bottom:4px}.drill-option{min-height:44px;padding:10px 14px;border-radius:12px;border-color:#354137;background:#1a211c;font-size:13px;color:#bec9bf}.drill-option[aria-pressed="true"]{background:#24331e;border-color:#b6df79;color:#ddf7b8}
+    .aspect-row{gap:6px;padding:16px 0 8px}.aspect-label{min-width:38px;color:#b9c6ba}.aspect-option{min-height:44px;flex:1;padding:9px 12px;border-radius:12px;font-size:13px;background:#1a211c;border-color:#354137}
+    .toolbar{gap:12px;margin:0 0 14px;padding:4px 0 14px;border-bottom:1px solid #2c372e}.toggle{min-height:44px;padding:0;gap:8px}.control-label{font-size:13px;color:#c8d2c8}.camera-btn{min-height:44px;padding:10px 18px;font-size:13px;border-radius:12px;background:#d8f6a4}
+    .record-controls{gap:10px;margin:0 0 8px}.record-btn,.save-btn{min-height:50px;padding:13px 16px;font-size:14px;border-radius:14px}.record-btn{border:1px solid #4c5c4e;background:#263029}.record-btn:disabled{opacity:.5}.record-btn::before{content:"";display:inline-block;width:9px;height:9px;margin-right:8px;border-radius:50%;background:#f47b72;vertical-align:1px}.record-btn[aria-pressed="true"]::before{background:white;border-radius:2px}.save-btn{background:#d8f6a4}
+    .auto-save-row{margin:0 0 10px;padding:10px 12px}.auto-save-row .toggle{flex:0 0 auto}
+    .record-status{margin:0 2px 20px;font-size:12px;line-height:1.6;color:#a8b6a9}.lesson{padding:18px;border-radius:16px;background:#19211b;border-color:#303d33}.lesson-top{gap:12px;align-items:flex-start}.lesson h2{font-size:17px;line-height:1.5}.tag{flex-shrink:0;font-size:11px;padding-top:4px;color:#bde391}.lesson p{font-size:14px;line-height:1.75;color:#c3cec3;margin:12px 0 16px}.steps{gap:8px}.step{font-size:12px;line-height:1.5;padding:7px 10px;background:#253027;color:#d2ded2}.note{font-size:12px;line-height:1.7;margin:16px 2px 0}
+    button:focus-visible{outline:2px solid #e0f7bc;outline-offset:3px}button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    @media(max-width:360px){h1{font-size:22px}.pill{font-size:10px;padding:6px 8px}.lesson-top{display:block}.tag{display:block;padding-top:4px}.camera-btn{padding:10px 14px}.control-label{font-size:12px}}
+    #cameraMessage:empty{display:none}
+    .viewfinder.landscape .scene[data-kind="shot"]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+
+    body{background:#151717;color:#f3f3eb}.brand-lockup{width:190px;height:60px;flex:none;transform:scale(.8333);background:url('./brand-logo.webp') -64px -43px / 316px 211px no-repeat;mix-blend-mode:lighten}header{height:70px;justify-content:center}
+    h1,.sub,.section-head,.drill-heading{display:none}
+    .tabs{width:94%;margin:0 auto 10px;padding:3px;gap:0;border:1px solid #363938;border-radius:12px;background:#202323}.tab{position:relative;min-height:44px;padding:7px 8px;border-radius:9px;background:transparent;color:#c7cbc5;font-size:13px}.tab[aria-selected="true"]{background:#2a2e2b;color:#d8f6a4;box-shadow:none}.tab[aria-selected="true"]::after{content:"";position:absolute;left:23%;right:23%;bottom:0;height:3px;border-radius:3px;background:#d8f6a4}
+    .drill-list{gap:7px;padding-bottom:10px;margin-bottom:2px}.drill-option{min-height:44px;border:1px solid #414642;border-radius:99px;background:#202423;color:#d2d6cf;padding:7px 12px;font-size:12px;font-weight:500}
+    .drill-list{gap:6px}
+    .drill-list .drill-option{min-height:40px;padding:6px 9px;font-size:11.5px;letter-spacing:0}.drill-option[aria-pressed="true"]{border-color:#d8f6a4;background:#191e18;color:#d8f6a4;box-shadow:inset 0 0 0 1px #d8f6a4}
+    .aspect-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:6px;padding:10px 0;margin:0;overflow:visible}.aspect-label{display:none}.aspect-option{min-height:44px;min-width:0;padding:6px 8px;border-radius:10px;border-color:#414642;background:#202423;color:#d2d6cf;font-size:12px}.aspect-option[aria-pressed="true"]{background:#191e18;border-color:#d8f6a4;color:#d8f6a4;box-shadow:inset 0 0 0 1px #d8f6a4}.aspect-row .toggle{gap:7px;padding-left:8px;border-left:1px solid #414642;flex-direction:row-reverse}.aspect-row .control-label{color:#d2d6cf;font-size:11px;white-space:nowrap}.switch{flex:none}.toggle[aria-checked="true"] .switch{background:#d8f6a4}
+    .record-controls{width:88%;gap:7px;align-items:stretch;margin:0 auto 8px}.camera-btn,.record-btn,.save-btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:0;white-space:nowrap;border-radius:10px;padding:8px 7px;font-size:12px;font-weight:650}.camera-btn{flex:1;border:1px solid #414642;background:#242827;color:#ededdf}.camera-btn::before{content:"";width:14px;height:10px;flex:none;border:2px solid currentColor;border-radius:3px;background:radial-gradient(circle at center,transparent 3px,currentColor 3px,currentColor 4px,transparent 4px)}.record-btn{flex:1.3;background:#d8f6a4;border-color:#d8f6a4;color:#17200f}.record-btn::before{width:10px;height:10px;margin:0;flex:none;background:#ed5146}.record-btn:disabled{opacity:.5}.record-btn[aria-pressed="true"]{background:#d94a45;border-color:#d94a45;color:white}.save-btn{flex:1;background:#242827;border:1px solid #414642;color:#ededdf}.save-btn::before{content:"↓";font-size:18px;line-height:1}.record-status{color:#a6aea5;font-size:12px;margin:0 2px 12px}
+    .auto-save-row{width:94%;margin:0 auto 8px;padding:8px 10px;gap:8px;border-radius:10px}.auto-save-copy strong{font-size:11px}.auto-save-copy small{font-size:9px;line-height:1.35}.auto-save-row .toggle{flex:0 0 auto}
+    .lesson{width:94%;margin:0 auto;border-radius:12px;background:#202423;border-color:#373e37;padding:14px}.lesson-top{gap:8px}.lesson h2{color:#f0f2e6;font-size:15px}.tag{color:#b4c5a3;font-size:10px}.lesson p{color:#c5cdc0;font-size:12px;line-height:1.55;margin:8px 0 10px}.steps{gap:6px}.step{background:#2b322a;color:#d4ddcc;border-radius:7px;padding:5px 7px;font-size:10px}.note{color:#a5ada2;font-size:11px;margin-top:12px}button:focus-visible{outline-color:#d8f6a4}
+    @media(max-width:360px){.aspect-row .control-label{display:none}.aspect-row{gap:5px}.camera-btn,.record-btn,.save-btn{font-size:11px;padding:8px 5px;gap:4px}.record-controls{gap:5px}.camera-btn::before{width:13px;height:10px}}
+.install-hint{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:536px;margin:0 auto;background:var(--panel);border:1px solid #39423a;border-radius:16px;padding:12px 12px 12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 32px #00000066;z-index:60}
+    .install-hint .ih-icon{flex:0 0 auto;font-size:20px}
+    .install-hint p{margin:0;flex:1;font-size:13px;line-height:1.5}
+    .install-hint b{color:var(--lime)}
+    .install-hint .ih-btn{flex:0 0 auto;border-radius:99px;background:var(--lime);color:#16210f;font-weight:700;font-size:13px;padding:8px 14px}
+    .install-hint .ih-close{flex:0 0 auto;background:none;color:var(--muted);font-size:16px;padding:6px;min-width:40px;min-height:40px;display:grid;place-items:center}
+    .countdown{position:absolute;inset:0;display:grid;place-items:center;font-size:min(26vw,140px);font-weight:800;color:#d8f6a4;text-shadow:0 4px 26px #101411e6;pointer-events:none;z-index:5}
+    /* ===== 新功能：参考线 / 水平仪 / 挑战 / 作品库 ===== */
+    .enhance-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:10px 0 0}
+    .enhance-row::-webkit-scrollbar{display:none}
+    .guide-chip{flex:0 0 auto;padding:8px 12px;border:1px solid #343d35;border-radius:99px;background:#1a211b;color:#bac2b8;font-size:12px;white-space:nowrap;line-height:1.3}
+    .guide-chip[aria-pressed="true"]{background:#d8f6a4;border-color:#d8f6a4;color:#202b16;font-weight:700}
+    .level-badge{position:absolute;top:10px;left:10px;z-index:5;padding:5px 10px;border-radius:99px;background:#20241fd9;color:#e8f3e2;font-size:11px;font-weight:600;letter-spacing:.03em}
+    .level-badge.ok{background:#2f7d4f;color:#fff}
+    .horizon{position:absolute;inset:0;z-index:4;pointer-events:none}
+    .horizon path{stroke:#d8f6a4;stroke-width:.5;stroke-dasharray:4 3;opacity:.75}
+    .scene.ghost{opacity:.35;pointer-events:none}
+    .challenge-card{margin:12px 1px 0;padding:14px 16px;border:1px solid #303a31;border-radius:16px;background:#141a15}
+    .ch-top{display:flex;align-items:center;gap:9px}
+    .ch-badge{flex:0 0 auto;padding:4px 9px;border-radius:99px;background:#d8f6a4;color:#202b16;font-size:11px;font-weight:700}
+    .ch-top h2{flex:1;font-size:15.5px;color:#f2f6ee;margin:0;font-weight:700}
+    .ch-done{font-size:11px;color:#93a996;flex:0 0 auto}
+    .challenge-card>p{font-size:12.5px;line-height:1.6;color:#a9bcaa;margin:8px 0 0}
+    .ch-actions{display:flex;gap:9px;margin-top:12px}
+    .ch-btn{flex:1;padding:10px 12px;border-radius:12px;border:1px solid #3a443a;background:#20261f;color:#e8f3e2;font-size:12.5px;font-weight:600;line-height:1.35}
+    .ch-btn.primary{background:#d8f6a4;border-color:#d8f6a4;color:#202b16}
+    .ch-btn.danger{border-color:#5a3535;color:#e2a9a9;background:#2a1f1f}
+    .ch-hint{font-size:11px;color:#71836f;margin:9px 0 0;line-height:1.5}
+    .library{margin:16px 1px 0}
+    .lib-head{display:flex;align-items:baseline;gap:8px}
+    .lib-head strong{font-size:15px;color:#f2f6ee}
+    .lib-head span{font-size:11.5px;color:#93a996}
+    .lib-filters{display:flex;gap:6px;margin-top:9px;overflow-x:auto;scrollbar-width:none}
+    .lib-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+    .lib-grid button{position:relative;border:0;border-radius:10px;overflow:hidden;background:#101511;aspect-ratio:3/4;padding:0;cursor:pointer}
+    .lib-grid img{width:100%;height:100%;object-fit:cover;display:block}
+    .lib-grid .lib-tag{position:absolute;left:5px;bottom:5px;padding:2px 7px;border-radius:99px;background:#141a15cc;color:#d8f6a4;font-size:10px;font-weight:600}
+    .lib-empty{font-size:12px;color:#71836f;margin:10px 0 0;line-height:1.5}
+    .lightbox{position:fixed;inset:0;z-index:60;background:#050705aa;backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:18px}
+    .lb-panel{width:min(480px,100%);max-height:92vh;overflow:auto;background:#141a15;border:1px solid #303a31;border-radius:16px;padding:12px}
+    .lb-panel img{width:100%;border-radius:10px;display:block;background:#0b100d}
+    .lb-meta{font-size:12px;color:#a9bcaa;margin:9px 2px 0;line-height:1.5}
+    .lb-actions{display:flex;gap:8px;margin-top:11px}
+    .lb-actions.stacked{flex-direction:column}
+</style>
+</head>
+<body>
+  <main class="app">
+    <header><div class="brand-lockup" role="img" aria-label="取景课 · 短视频拍摄学习助手"></div></header>
+    <h1>看懂画面，拍好每一镜。</h1>
+    <p class="sub">选练习、看示范，再用自己的镜头试一遍。</p>
+
+    <div class="section-head"><strong>选择练习</strong><span>先选类别，再选项目</span></div>
+    <div class="tabs" role="tablist" aria-label="练习类别">
+      <button class="tab" role="tab" aria-selected="true" data-kind="shot">景别</button>
+      <button class="tab" role="tab" aria-selected="false" data-kind="composition">构图</button>
+      <button class="tab" role="tab" aria-selected="false" data-kind="movement">镜头运动</button>
+<button class="tab" role="tab" aria-selected="false" data-kind="challenge">挑战</button>
+    </div>
+    <div class="drill-heading"><span id="drillHeading">景别练习</span><span>左右滑动选择</span></div>
+    <div class="drill-list" id="drillList" role="group" aria-label="具体练习项目"></div>
+
+    <section class="viewfinder" aria-label="手机取景预览">
+      <video id="camera" autoplay muted playsinline></video>
+      <div class="scene" id="placeholder" aria-hidden="true"><div class="comp-scene hidden" id="compScene"></div><img class="scene-image" src="./shots/actor.webp" alt="取景示范人物"></div>
+      <div class="motion-demo hidden" id="motionDemo" aria-live="polite">
+        <canvas class="mg-canvas" id="mgCanvas" role="img" aria-label="镜头运动实时演示"></canvas>
+      </div>
+      <div class="grid" id="grid" aria-hidden="true"><svg class="guide-svg" id="guideSvg" viewBox="0 0 100 100" preserveAspectRatio="none"></svg></div>
+        <div class="countdown hidden" id="countdown" aria-hidden="true">3</div>
+      <div class="frame-label" id="frameLabel">三分法 · 交点构图</div>
+      <div class="guide-legend hidden" id="guideLegend">箭头表示镜头运动方向</div>
+      <div class="level-badge hidden" id="levelBadge">水平 0.0°</div>
+      <svg class="horizon hidden" id="horizonLine" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50H100"/></svg>
+    </section>
+
+    <div class="motion-plan hidden" id="motionPlan" aria-hidden="true">
+      <canvas id="mgPlan"></canvas>
+      <div class="mp-info"><b id="mpTitle">俯视机位图</b><span id="mpNote">机位沿轴线前推，主体由小变大</span></div>
+    </div>
+    <section class="challenge-card hidden" id="challengeCard" aria-live="polite">
+      <div class="ch-top"><span class="ch-badge" id="chKind">景别</span><h2 id="chTitle">—</h2><span class="ch-done" id="chDone">达标 0 / 拍摄 0</span></div>
+      <p id="chDesc">—</p>
+      <div class="steps" id="chSteps"></div>
+      <div class="ch-actions">
+        <button class="ch-btn" id="chNew" type="button">换一题</button>
+        <button class="ch-btn primary" id="chShot" type="button">拍照练习</button>
+      </div>
+      <p class="ch-hint">开启相机后按要点取景拍照，拍完对照要点自评，照片会存入下方作品库。</p>
+    </section>
+
+    <div class="aspect-row" role="group" aria-label="拍摄画幅">
+      <span class="aspect-label">画幅</span>
+      <button class="aspect-option" type="button" data-ratio="16/9" data-value="1.777778" aria-pressed="false">16:9</button>
+      <button class="aspect-option" type="button" data-ratio="9/16" data-value="0.5625" aria-pressed="true">9:16</button>
+      <button class="toggle" id="gridToggle" role="switch" aria-checked="true" aria-label="辅助参考线">
+        <span class="switch" aria-hidden="true"></span><span class="control-label">辅助参考线</span>
+      </button>
+    </div>
+    <div class="enhance-row" role="group" aria-label="取景器增强">
+      <span class="aspect-label">参考线</span>
+      <button class="guide-chip" type="button" data-guide="lesson" aria-pressed="true">课程</button>
+      <button class="guide-chip" type="button" data-guide="thirds" aria-pressed="false">三分</button>
+      <button class="guide-chip" type="button" data-guide="center" aria-pressed="false">中心</button>
+      <button class="guide-chip" type="button" data-guide="diagonal" aria-pressed="false">对角</button>
+      <button class="guide-chip" type="button" data-guide="golden" aria-pressed="false">黄金</button>
+      <button class="guide-chip" type="button" data-guide="off" aria-pressed="false">关</button>
+      <button class="toggle" id="levelToggle" type="button" role="switch" aria-checked="false" aria-label="电子水平仪">
+        <span class="switch" aria-hidden="true"></span><span class="control-label">水平仪</span>
+      </button>
+    </div>
+
+    <div class="record-controls">
+      <button class="camera-btn" id="cameraButton">开启相机</button>
+      <button class="record-btn" id="recordButton" type="button" disabled>开始录制</button>
+      <button class="save-btn hidden" id="saveButton" type="button">保存到手机</button>
+      <button class="camera-btn" id="photoButton" type="button" disabled>拍照存库</button>
+    </div>
+    <div class="auto-save-row">
+      <span class="auto-save-copy"><strong>自动保存相册</strong><small>结束录制后尝试打开系统保存菜单；iPhone 仍需点“存储视频”</small></span>
+      <button class="toggle" id="autoSaveToggle" type="button" role="switch" aria-checked="false" aria-label="自动保存相册"><span class="switch" aria-hidden="true"></span></button>
+    </div>
+    <p class="record-status hidden" id="cameraMessage" aria-live="polite"></p>
+    <p class="record-status" id="recordStatus" aria-live="polite">开启相机后可录制；视频只在本机处理，保存时不会上传。</p>
+
+    <article class="lesson" aria-live="polite">
+      <div class="lesson-top"><h2 id="lessonTitle">三分法 · 交点构图</h2><span class="tag" id="lessonTag">构图基础</span></div>
+      <p id="lessonDescription">把人物的眼睛放在上方横线附近，再让主体靠近竖线交点。背景留出呼吸空间，画面会更自然。</p>
+      <div class="steps" id="lessonSteps"><span class="step">人物眼睛落在线上</span><span class="step">主体靠近交点</span><span class="step">注意视线方向留白</span></div>
+    </article>
+    <p class="note">练习提示用于辅助观察；拍摄是否准确，仍需结合完整视频复盘。</p>
+    <section class="library" id="librarySection">
+      <div class="lib-head"><strong>作品库</strong><span id="libCount">0 张</span></div>
+      <div class="lib-filters" id="libFilters">
+        <button class="guide-chip" type="button" data-lib="all" aria-pressed="true">全部</button>
+        <button class="guide-chip" type="button" data-lib="shot" aria-pressed="false">景别</button>
+        <button class="guide-chip" type="button" data-lib="composition" aria-pressed="false">构图</button>
+        <button class="guide-chip" type="button" data-lib="movement" aria-pressed="false">运镜</button>
+      </div>
+      <div class="lib-grid" id="libGrid"></div>
+      <p class="lib-empty" id="libEmpty">还没有作品。开启相机点「拍照存库」，或在挑战模式里完成练习，照片只保存在本机。</p>
+    </section>
+    <div class="lightbox hidden" id="lightbox" role="dialog" aria-label="作品详情">
+      <div class="lb-panel">
+        <img id="lbImg" alt="作品照片">
+        <p class="lb-meta" id="lbMeta"></p>
+        <div class="lb-actions">
+          <button class="ch-btn primary" id="lbSave" type="button">保存到手机</button>
+          <button class="ch-btn danger" id="lbDelete" type="button">删除</button>
+          <button class="ch-btn" id="lbClose" type="button">关闭</button>
+        </div>
+      </div>
+    </div>
+    <div class="lightbox hidden" id="shotModal" role="dialog" aria-label="练习拍照结果">
+      <div class="lb-panel">
+        <img id="smImg" alt="练习照片">
+        <p class="lb-meta" id="smMeta"></p>
+        <div class="lb-actions stacked">
+          <button class="ch-btn primary" id="smGood" type="button">达标 · 存入作品库</button>
+          <button class="ch-btn" id="smRetry" type="button">存为待改进</button>
+          <button class="ch-btn danger" id="smDiscard" type="button">重拍（不保存）</button>
+        </div>
+      </div>
+    </div>
+    <div class="install-hint hidden" id="installHint" role="status">
+      <span class="ih-icon">📲</span>
+      <p id="installHintText">像 App 一样使用：点底部分享图标 → 选<b>添加到主屏幕</b>，离线也能上课。</p>
+      <button type="button" class="ih-btn hidden" id="installBtn">安装</button>
+      <button type="button" class="ih-close" id="installClose" aria-label="关闭安装提示">✕</button>
+    </div>
+  </main>
+  <script>
+    const composition=[
+      ['三分法构图','把画面横竖各分三等份，将主体或人物眼睛放在分割线或交点附近。',['打开九宫格参考线','主体靠近交点','视线方向留白']],
+      ['中心构图','将主体放在画面中央，适合突出人物、产品或正面表达。',['主体对准画面中心','保持背景简洁','注意画面左右平衡']],
+      ['对称构图','利用画面左右或上下的相似形态形成平衡，常用于建筑、倒影和正面场景。',['寻找对称轴','主体贴近中轴','检查两侧画面平衡']],
+      ['对角线构图','让主体、道路或边缘沿画面对角线延伸，增加方向感和动势。',['主体沿对角线安排','保留运动方向空间','注意画面重心']],
+      ['引导线构图','利用道路、栏杆、墙线等线条汇聚到人物所在的纵深位置，把视线引向主体。',['找到明显线条','让线条汇聚到人物位置','避免线条从头部穿过']],
+      ['框架构图','借助门窗、树枝或拱门等前景元素形成画框，突出框内主体。',['先找自然框架','主体落在框内','前景不要遮住主体']],
+      ['前景构图','在镜头前保留近处物体，形成前景、中景和背景层次。',['前景靠近镜头边缘','主体保持清晰','控制前景遮挡比例']],
+      ['三角形构图','把人物或物体安排成三角形关系，让画面稳定并形成层次。',['找出三个视觉点','组成稳定三角关系','保留主体间距']],
+      ['水平线构图','让横线准确落在海天交界处，表现天空与水面的开阔关系。',['水平线贴合海天交界','保持海天线平直','依主题安排天空与水面比例']],
+      ['垂直线构图','人物侧身站立，让肩部与身体形成清晰竖直轮廓，并呼应建筑立柱。',['保持人物侧身','让肩线顺着身体形成竖线','画面上下留出空间']],
+      ['黄金分割线构图','结合38.2%与61.8%分割线和黄金螺旋，让螺旋收束点落在视觉重点附近。',['开启黄金分割线与螺旋虚线','主体靠近螺旋收束点','用分割线检查画面平衡']]
+    ].map(([name,description,steps])=>({name,title:`${name} · 取景练习`,tag:'构图练习',description,steps,label:`${name} · 参考线练习`}));
+    const shots=[
+      ['远景','环境为主，人物较小，用空间和环境交代地点与氛围。',['环境占主要画面','人物完整且偏小','注意前中后景层次']],
+      ['全景','人物全身入画，头顶和脚下留出适当空间，兼顾人物动作与环境。',['从头到脚完整入画','动作方向留出空间','避免切到脚或头顶']],
+      ['中景','人物从头部到膝盖以上入画，兼顾人物动作和周围环境。',['画面下沿落在膝盖以上','人物动作保持完整','留出适当环境空间']],
+      ['中近景','人物从头部到腰部入画，突出上半身动作与表情。',['画面下沿落在腰部','眼睛靠近上方三分线','注意视线方向留白']],
+      ['近景','以主题人物为主体，胸部以上入画，突出表情与情绪。',['画面下沿在胸部以上','眼神清晰有神','头顶留白适度']],
+      ['特写','人物肩部以上近距离入画，突出面部表情与细节。',['画面下沿落在肩部以上','面部清晰不误切','背景尽量简洁']],
+      ['大特写','进一步放大局部，例如眼睛、手指或产品细节，形成强烈视觉强调。',['只保留必要局部','对焦准确稳定','留意细节不要出框']]
+    ].map(([name,description,steps])=>({name,title:`${name} · 取景练习`,tag:'景别练习',description,steps,label:`${name} · 取景`}));
+    const movements=[
+      ['推镜头','相机机位沿镜头方向真实靠近主体；主体逐渐变大，前后景产生视差，区别于原地变焦。',['保持镜头焦段不变','稳定向主体靠近','起止各停一秒']],
+      ['拉镜头','相机机位沿镜头反方向真实远离主体；主体逐渐变小，更多环境进入画面。',['保持镜头焦段不变','稳定向后移动','先检查身后安全']],
+      ['摇镜头','机位固定，只转动云台：镜头水平扫过，主体向画面另一侧移动，背景依次展开；上下摇只是把转动方向换成俯仰。',['锁定脚下机位','匀速转动云台','摇前摇后短暂停顿']],
+      ['移镜头','机位整体横向平移，视点沿水平方向滑过场景：主体位置随之改变，近景移动快、远景慢，产生视差。',['保持机位高度不变','匀速横向平移','观察近景与远景的速度差']],
+      ['跟镜头','相机与主体同速同向移动：主体在画面中的大小和位置保持稳定，背景持续反向流动；前跟、后跟、侧跟只是机位相对主体的方位不同。',['与主体保持固定距离','同速移动并持续对焦','观察背景连续反向流动']],
+      ['升镜头','镜头从人物脚部起，沿身体垂直向上移动，最后到头部。',['起点对准脚部','保持垂直匀速上移','停在人物头部']],
+      ['降镜头','镜头从人物头部起，沿身体垂直向下移动，最后到脚部。',['起点对准头部','保持垂直匀速下移','停在人物脚部']],
+      ['环绕镜头','相机沿主体周围的弧线移动，并持续转向主体；主体大体留在画面中，背景视角随之变化。',['先规划短弧线和安全路线','边移动边对准主体','保持距离与速度平稳']],
+      ['升格镜头','以高于播放帧率的速度拍摄，再按较低帧率播放，动作因此变慢；它改变时间呈现，不移动机位。',['确认设备支持高帧率','拍摄时提高帧率','按常规帧率播放或慢放']],
+      ['延时镜头','固定机位按设定间隔采集画面，再连续播放，把云、人流或日夜等长时间变化压缩呈现。',['固定机位并锁定构图','按场景变化设置间隔','连续播放压缩时间']]
+    ].map(([name,description,steps])=>({name,title:`${name} · 拍摄练习`,tag:name==='升格镜头'||name==='延时镜头'?'时间表现练习':'镜头运动练习',description,steps,label:`${name} · 按提示练习`}));
+    const banks={composition,shot:shots,movement:movements};
+    const guides={
+      "composition": [
+            "<path class=\"guide-line\" d=\"M33.3 0v100M66.7 0v100M0 33.3h100M0 66.7h100\"/>",
+            "<path class=\"guide-line\" d=\"M50 0v100M0 50h100\"/>",
+            "<path class=\"guide-accent\" d=\"M50 0v100\"/>",
+            "<path class=\"guide-accent\" d=\"M0 100L100 18\"/>",
+            "<path class=\"guide-accent guide-dash\" d=\"M0 100L50 46 100 100M0 74L50 46M100 74L50 46\"/><circle class=\"guide-dot\" cx=\"50\" cy=\"46\" r=\"1.6\"/>",
+            "<rect class=\"guide-accent\" x=\"15\" y=\"12\" width=\"70\" height=\"76\" rx=\"2\"/>",
+            "<path class=\"guide-area guide-dash\" d=\"M0 0H21Q14 8 24 15Q15 21 12 29Q20 34 18 42Q10 49 21 56Q14 63 18 72H0Z\"/>",
+            "<path class=\"guide-accent\" d=\"M50 18L22 90H78Z\"/>",
+            "<path class=\"guide-accent\" d=\"M0 24h100\"/>",
+            "<path class=\"guide-accent\" d=\"M32 0v100M68 0v100\"/>",
+            "<path class=\"guide-line guide-dash\" d=\"M38.2 0v100M61.8 0v100M0 38.2h100M0 61.8h100\"/><path class=\"guide-accent guide-dash\" transform=\"rotate(-70 50 50)\" d=\"M0 61.8A61.8 61.8 0 0 1 61.8 0A38.2 38.2 0 0 1 100 38.2A23.6 23.6 0 0 1 76.4 61.8A14.6 14.6 0 0 1 61.8 47.2A9 9 0 0 1 70.8 38.2A5.6 5.6 0 0 1 76.4 43.8\"/><text class=\"guide-text\" x=\"40\" y=\"7\">0.618</text>"
+      ]
+};
+    const tabs=[...document.querySelectorAll('.tab')],grid=document.querySelector('#grid'),gridToggle=document.querySelector('#gridToggle'),viewfinder=document.querySelector('.viewfinder'),aspectOptions=[...document.querySelectorAll('.aspect-option')];
+    let selectedLesson;
+    function resizeFrame(ratio){const parent=viewfinder.parentElement,style=getComputedStyle(parent),availableWidth=Math.min(parent.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight),document.documentElement.clientWidth-32),maxHeight=window.innerHeight*.58,width=Math.min(availableWidth,maxHeight*ratio);viewfinder.style.setProperty('--frame-ratio',`${ratio}`);viewfinder.style.setProperty('--frame-width',`${width}px`);viewfinder.style.setProperty('--frame-height',`${width/ratio}px`);viewfinder.classList.toggle('landscape',ratio>=1);document.querySelector('#motionDemo').classList.toggle('landscape',ratio>=1);if(selectedLesson)showLesson(selectedLesson);mgResize()}
+    aspectOptions.forEach(option=>option.addEventListener('click',()=>{aspectOptions.forEach(item=>item.setAttribute('aria-pressed',String(item===option)));resizeFrame(Number(option.dataset.value))}));
+    resizeFrame(Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value));
+    let resizeRaf=0;window.addEventListener('resize',()=>{if(resizeRaf)return;resizeRaf=requestAnimationFrame(()=>{resizeRaf=0;resizeFrame(Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value))})});
+    const heading=document.querySelector('#drillHeading'),drillList=document.querySelector('#drillList');let activeKind='shot';
+    /* 景别统一用同一张母图缩放实现：scale = 母图放大倍数，y = 母图顶部相对画框的偏移(占画框高度%) */
+    const actorSrc='./shots/actor.webp';
+    const shotFrames=[
+      {scale:0.27,y:59.0},    // 远景：人物约占画高 1/4，脚下留大片环境
+      {scale:1.03,y:-0.3},    // 全景：头顶到脚正好充满画框
+      {scale:1.45,y:-0.3},    // 中景：下沿卡在膝盖（裙摆边缘）
+      {scale:2.38,y:-3.1},    // 中近景：下沿卡在腰部
+      {scale:3.20,y:-6.8},    // 近景：下沿卡在胸部
+      {scale:5.05,y:-13.6},   // 特写：下沿卡在肩膀
+      {scale:12.0,y:-86.4}    // 大特写：只取眼部局部（双眉+双眼+鼻梁）
+    ];
+    
+    let stream,recordingStream,recorder,chunks=[],recordedBlob,recordingUrl,drawFrame,timer,recordingCap,poseTimer,countdownTimer=0,stopByUser=false;
+    const video=document.querySelector('#camera'),cameraButton=document.querySelector('#cameraButton'),recordButton=document.querySelector('#recordButton'),saveButton=document.querySelector('#saveButton'),recordStatus=document.querySelector('#recordStatus'),autoSaveToggle=document.querySelector('#autoSaveToggle');
+    let autoSaveEnabled=false;try{autoSaveEnabled=localStorage.getItem('qujingke-auto-save')==='true'}catch{}
+    autoSaveToggle.setAttribute('aria-checked',String(autoSaveEnabled));
+    /* ================= 镜头运动：真实机位推演（Canvas 透视投影） ================= */
+    var MG={c:null,ctx:null,plan:null,pctx:null,W:0,H:0,dpr:1,f:0,raf:0,idx:-1,active:false,t0:0,fit:null,side:false,pw:0,ph:0,ro:null};
+    const MG_AR=3338/4481,MG_BODY=1.68,MG_VFOV=50*Math.PI/180,MG_LOOP=7000,D2R=Math.PI/180;
+    const mgImg=new Image();mgImg.src='./shots/actor-motion.webp';
+    const mgEase=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+    const mgLook=(targetY,camY,dist)=>Math.atan2(targetY-camY,Math.max(dist,.2));
+    const MG_TREES=[{x:-4.6,z:-3.4,h:4.8,w:1.7},{x:5.6,z:-6.4,h:5.6,w:2.0},{x:-7.2,z:3.2,h:3.8,w:1.4},{x:3.4,z:8.2,h:3.2,w:1.2},{x:-1.9,z:-9.5,h:5.0,w:1.8}];
+    const MG_BUSH={x:1.9,z:1.3,h:1.05,w:1.7};
+    const MG_TUFTS=[[-1.1,1.4],[-0.5,2.1],[0.8,1.7],[1.5,2.6],[-1.9,2.9],[2.2,1.2],[-2.4,1.1],[0.3,3.4],[-0.9,4.2],[1.9,4.6],[-1.6,5.4],[2.6,5.8],[-3.1,3.6],[0.6,6.6]];
+    const MG_DAY=[
+      {skyTop:'#f3cfa2',skyBot:'#fbe9d3',far:'#e8dcc9',near:'#d8c8b2',hill1:'#cdb89e',hill2:'#b49d83',tree:'#8a7a63',sun:'#ffb478',grid:'#b7a48b'},
+      {skyTop:'#c3dced',skyBot:'#f2f8fa',far:'#dbe6da',near:'#bccdbe',hill1:'#b3c6b7',hill2:'#9cb3a3',tree:'#5f7f68',sun:'#fff6cf',grid:'#8fa595'},
+      {skyTop:'#eaa87c',skyBot:'#f9dcbe',far:'#e3d1bd',near:'#cdb8a2',hill1:'#bfa48b',hill2:'#a68c73',tree:'#6f6d58',sun:'#ff8f4e',grid:'#a58e74'},
+      {skyTop:'#2b4157',skyBot:'#6d8497',far:'#4f5e57',near:'#38473f',hill1:'#33463c',hill2:'#27362f',tree:'#35473b',sun:'#e2e9ff',grid:'#4c6055'}
+    ];
+    const mgMix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+    const mgHex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+    const mgCss=c=>`rgb(${c[0]},${c[1]},${c[2]})`;
+    function mgDayPalette(u){
+      const p=Math.min(.9999,Math.max(0,u))*3,i=Math.floor(p),t=p-i;
+      const a=MG_DAY[i],b=MG_DAY[Math.min(3,i+1)],out={};
+      for(const k of ['skyTop','skyBot','far','near','hill1','hill2','tree','sun','grid'])out[k]=mgCss(mgMix(mgHex(a[k]),mgHex(b[k]),t));
+      return out;
+    }
+    function mgCamState(index,u){
+      switch(index){
+        case 0:{const d=6.2-4.25*mgEase(u);return{x:0,y:1.35,z:-d,yaw:0,pitch:mgLook(1.02,1.35,d),px:0,pz:0}}
+        case 1:{const d=1.95+4.25*mgEase(u);return{x:0,y:1.35,z:-d,yaw:0,pitch:mgLook(1.02,1.35,d),px:0,pz:0}}
+        case 2:return{x:0,y:1.35,z:-4.0,yaw:(-12+24*mgEase(u))*D2R,pitch:mgLook(1.02,1.35,4.0),px:0,pz:0};
+        case 3:return{x:-.9+1.8*mgEase(u),y:1.35,z:-4.2,yaw:0,pitch:mgLook(1.02,1.35,4.2),px:0,pz:0};
+        case 4:{const px=-1.7+3.4*mgEase(u);return{x:px,y:1.35,z:-3.6,yaw:0,pitch:mgLook(1.02,1.35,3.6),px,pz:0}}
+        case 5:{const y=.35+1.4*mgEase(u);return{x:0,y,z:-1.7,yaw:0,pitch:0,px:0,pz:0}}
+        case 6:{const y=1.75-1.4*mgEase(u);return{x:0,y,z:-1.7,yaw:0,pitch:0,px:0,pz:0}}
+        case 7:{const r=3.4,a=(-55+360*mgEase(u))*D2R;return{x:Math.sin(a)*r,y:1.25,z:Math.cos(a)*r,yaw:a+Math.PI,pitch:mgLook(1.05,1.25,r),px:0,pz:0}}
+        case 8:return{x:0,y:1.35,z:-4.2,yaw:0,pitch:mgLook(1.02,1.35,4.2),px:0,pz:0};
+        default:return{x:0,y:1.35,z:-4.6,yaw:0,pitch:mgLook(1.02,1.35,4.6),px:0,pz:0};
+      }
+    }
+    function mgProject(cam,x,y,z){
+      const dx=x-cam.x,dy=y-cam.y,dz=z-cam.z;
+      const cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);
+      const rx=dx*cy-dz*sy,fw=dx*sy+dz*cy;
+      const cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);
+      const up=dy*cp-fw*sp,dp=dy*sp+fw*cp;
+      if(dp<.09)return null;
+      const k=MG.f/dp;
+      return{u:MG.W/2+rx*k,v:MG.H/2-up*k,z:dp,k};
+    }
+    function mgSky(cam,pal){
+      const ctx=MG.ctx,W=MG.W,H=MG.H;
+      const hv=H/2+MG.f*Math.tan(cam.pitch);
+      ctx.fillStyle=pal.skyBot;ctx.fillRect(0,0,W,H);
+      const top=Math.min(-H*.2,hv-H*1.25);
+      const sky=ctx.createLinearGradient(0,top,0,Math.max(1,hv));
+      sky.addColorStop(0,pal.skyTop);sky.addColorStop(.72,pal.skyBot);sky.addColorStop(1,pal.far);
+      ctx.fillStyle=sky;ctx.fillRect(0,Math.max(0,top),W,Math.max(0,Math.min(H,hv)-Math.max(0,top))+1);
+    }
+    function mgGroundFill(cam,pal){
+      const ctx=MG.ctx,W=MG.W,H=MG.H;
+      const hv=H/2+MG.f*Math.tan(cam.pitch);
+      if(hv>=H)return;
+      const top=Math.max(0,hv-1);
+      const gnd=ctx.createLinearGradient(0,top,0,H);
+      gnd.addColorStop(0,pal.far);gnd.addColorStop(.35,pal.near);gnd.addColorStop(1,pal.near);
+      ctx.fillStyle=gnd;ctx.fillRect(0,top,W,H-top);
+    }
+    function mgSun(cam,pal,day){
+      const p=mgProject(cam,-9+18*day,6+15*Math.sin(day*Math.PI),40);
+      if(!p)return;
+      const r=Math.max(9,MG.f*.04),ctx=MG.ctx;
+      const g=ctx.createRadialGradient(p.u,p.v,0,p.u,p.v,r*3.6);
+      g.addColorStop(0,pal.sun);g.addColorStop(.32,pal.sun);g.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.globalAlpha=.8;ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.u,p.v,r*3.6,0,7);ctx.fill();
+      ctx.globalAlpha=1;ctx.fillStyle=pal.sun;ctx.beginPath();ctx.arc(p.u,p.v,r,0,7);ctx.fill();
+    }
+    function mgTreeLine(cam,pal){
+      const ctx=MG.ctx,R=26;
+      for(let a=-Math.PI;a<Math.PI;a+=.055){
+        const rel=Math.atan2(Math.sin(a-cam.yaw),Math.cos(a-cam.yaw));
+        if(Math.abs(rel)>1.15)continue;
+        const px=cam.x+R*Math.sin(a),pz=cam.z+R*Math.cos(a);
+        const h=3.0+1.1*Math.sin(a*9.1)+.6*Math.sin(a*4.3);
+        const base=mgProject(cam,px,0,pz),top=mgProject(cam,px,Math.max(1.6,h),pz);
+        if(!base||!top)continue;
+        const hh=base.v-top.v,w=hh*.5;
+        ctx.fillStyle=pal.tree;ctx.globalAlpha=.55;
+        ctx.beginPath();ctx.moveTo(base.u,top.v);ctx.lineTo(base.u+w,base.v);ctx.lineTo(base.u-w,base.v);ctx.closePath();ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+    function mgHills(cam,pal,R,fill,base){
+      const ctx=MG.ctx,W=MG.W,H=MG.H,pts=[];
+      for(let u=-40;u<=W+40;u+=10){
+        const a=cam.yaw+Math.atan((u-W/2)/MG.f);
+        const dx=Math.sin(a),dz=Math.cos(a);
+        const b=cam.x*dx+cam.z*dz,c=cam.x*cam.x+cam.z*cam.z-R*R,disc=b*b-c;
+        if(disc<0)continue;
+        const t=-b+Math.sqrt(disc),px=cam.x+dx*t,pz=cam.z+dz*t,aa=Math.atan2(px,pz);
+        const h=base+2.3*Math.sin(aa*1.6+.5)+1.2*Math.sin(aa*3.7+2.2)+.5*Math.sin(aa*7.1+.8);
+        const pr=mgProject(cam,px,Math.max(.4,h),pz);
+        if(pr)pts.push([u,pr.v]);
+      }
+      if(pts.length<2)return;
+      ctx.beginPath();ctx.moveTo(pts[0][0],H+2);
+      pts.forEach(([u,v])=>ctx.lineTo(u,v));
+      ctx.lineTo(pts[pts.length-1][0],H+2);ctx.closePath();
+      ctx.fillStyle=fill;ctx.fill();
+    }
+    function mgGround(cam,pal){
+      const ctx=MG.ctx;ctx.lineWidth=1;ctx.strokeStyle=pal.grid;ctx.globalAlpha=.45;ctx.beginPath();
+      for(let g=-21;g<=21;g+=3){
+        for(let s=-21;s<21;s+=3){
+          const a=mgProject(cam,s,0,g),b=mgProject(cam,s+3,0,g);
+          if(a&&b){ctx.moveTo(a.u,a.v);ctx.lineTo(b.u,b.v)}
+          const c=mgProject(cam,g,0,s),d=mgProject(cam,g,0,s+3);
+          if(c&&d){ctx.moveTo(c.u,c.v);ctx.lineTo(d.u,d.v)}
+        }
+      }
+      ctx.stroke();ctx.globalAlpha=1;
+    }
+    function mgTufts(cam,pal){
+      const ctx=MG.ctx;
+      for(const t of MG_TUFTS){
+        const base=mgProject(cam,t[0],0,t[1]);
+        if(!base||base.u<-40||base.u>MG.W+40)continue;
+        const tip=mgProject(cam,t[0],.16,t[1]);
+        if(!tip)continue;
+        const hh=Math.max(2,base.v-tip.v),wd=hh*.55;
+        const a=Math.min(.55,Math.max(.12,1.9/Math.max(1.2,base.z)));
+        ctx.save();
+        ctx.globalAlpha=a;
+        ctx.strokeStyle=pal.tree;ctx.lineWidth=Math.max(1,hh*.09);ctx.lineCap='round';
+        ctx.beginPath();
+        ctx.moveTo(base.u,base.v);ctx.quadraticCurveTo(base.u-wd*.5,base.v-hh*.6,base.u-wd*.85,base.v-hh*.95);
+        ctx.moveTo(base.u,base.v);ctx.quadraticCurveTo(base.u+wd*.35,base.v-hh*.65,base.u+wd*.6,base.v-hh*1.05);
+        ctx.moveTo(base.u,base.v);ctx.lineTo(base.u+wd*.05,base.v-hh*1.15);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    function mgTree(cam,t,pal){
+      const base=mgProject(cam,t.x,0,t.z),top=mgProject(cam,t.x,t.h,t.z);
+      if(!base||!top)return;
+      const h=base.v-top.v;if(h<2)return;
+      const w=t.w*base.k,ctx=MG.ctx;
+      ctx.globalAlpha=.12;ctx.fillStyle='#33453a';
+      ctx.beginPath();ctx.ellipse(base.u,base.v,w*.34,w*.09,0,0,7);ctx.fill();ctx.globalAlpha=1;
+      ctx.fillStyle=pal.tree;
+      ctx.fillRect(base.u-w*.045,base.v-h*.34,w*.09,h*.34);
+      ctx.beginPath();ctx.moveTo(base.u,top.v);ctx.lineTo(base.u+w*.42,base.v-h*.22);ctx.lineTo(base.u-w*.42,base.v-h*.22);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(base.u,top.v+h*.16);ctx.lineTo(base.u+w*.5,base.v-h*.34);ctx.lineTo(base.u-w*.5,base.v-h*.34);ctx.closePath();ctx.fill();
+    }
+    function mgBush(cam,pal){
+      const base=mgProject(cam,MG_BUSH.x,0,MG_BUSH.z);
+      if(!base)return;
+      const w=MG_BUSH.w*base.k,h=MG_BUSH.h*base.k,ctx=MG.ctx;
+      ctx.globalAlpha=.16;ctx.fillStyle='#33453a';
+      ctx.beginPath();ctx.ellipse(base.u,base.v,w*.52,h*.16,0,0,7);ctx.fill();ctx.globalAlpha=1;
+      ctx.fillStyle=pal.tree;
+      [[0,.44,.5,.5],[-.3,.3,.3,.34],[.28,.34,.28,.3]].forEach(([ox,oy,rx,ry])=>{
+        ctx.globalAlpha=.9;ctx.beginPath();ctx.ellipse(base.u+w*ox,base.v-h*oy,w*rx,h*ry,0,0,7);ctx.fill();
+      });
+      ctx.globalAlpha=1;
+    }
+    function mgActor(cam,px,pz){
+      const ctx=MG.ctx;
+      const foot=mgProject(cam,px,0,pz),head=mgProject(cam,px,MG_BODY,pz);
+      if(!foot||!head)return;
+      const h=foot.v-head.v;if(h<3)return;
+      const w=h*MG_AR;
+      ctx.save();ctx.globalAlpha=.16;ctx.fillStyle='#33453a';
+      ctx.beginPath();ctx.ellipse(foot.u,foot.v,w*.22,w*.055,0,0,7);ctx.fill();ctx.restore();
+      if(mgImg.complete&&mgImg.naturalWidth)ctx.drawImage(mgImg,foot.u-w/2,head.v,w,h);
+    }
+    function mgLeaf(cam,u){
+      const ctx=MG.ctx;
+      const p=mgProject(cam,.55,2.35-2.05*u,-1.15);
+      if(!p)return;
+      const s=p.k*.055;
+      ctx.save();ctx.translate(p.u,p.v);ctx.rotate(u*6.2);
+      ctx.fillStyle='#9fbb72';
+      ctx.beginPath();ctx.ellipse(0,0,s*1.7,s*.72,0,0,7);ctx.fill();
+      ctx.strokeStyle='#6d8a52';ctx.lineWidth=Math.max(1,s*.1);ctx.beginPath();ctx.moveTo(-s*1.6,0);ctx.lineTo(s*1.6,0);ctx.stroke();
+      ctx.restore();
+    }
+    function mgRender(u){
+      const ctx=MG.ctx;if(!ctx||!MG.W||!MG.H)return;
+      const cam=mgCamState(MG.idx,u);
+      const pal=MG.idx===9?mgDayPalette(u):mgDayPalette(.33);
+      ctx.clearRect(0,0,MG.W,MG.H);
+      mgSky(cam,pal);
+      mgSun(cam,pal,MG.idx===9?u:.28);
+      mgHills(cam,pal,54,pal.hill1,4.6);
+      mgHills(cam,pal,26,pal.hill2,2.2);
+      mgTreeLine(cam,pal);
+      mgGroundFill(cam,pal);
+      const hv=MG.H/2+MG.f*Math.tan(cam.pitch);
+      if(hv>0&&hv<MG.H){ctx.globalAlpha=.35;ctx.strokeStyle=pal.hill2;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,hv);ctx.lineTo(MG.W,hv);ctx.stroke();ctx.globalAlpha=1}
+      mgGround(cam,pal);
+      mgTufts(cam,pal);
+      const fwd=(x,z)=>(x-cam.x)*Math.sin(cam.yaw)+(z-cam.z)*Math.cos(cam.yaw);
+      const items=MG_TREES.map(t=>({z:fwd(t.x,t.z),draw:()=>mgTree(cam,t,pal)}));
+      items.push({z:fwd(MG_BUSH.x,MG_BUSH.z),draw:()=>mgBush(cam,pal)});
+      items.push({z:fwd(cam.px,cam.pz),draw:()=>mgActor(cam,cam.px,cam.pz)});
+      items.sort((a,b)=>b.z-a.z).forEach(i=>{if(i.z>.1)i.draw()});
+      if(MG.idx===8)mgLeaf(cam,u);
+      mgPlan(cam,u);
+    }
+    function mgLoop(ts){
+      if(!MG.active)return;
+      if(!MG.W){if(!mgMeasure()){MG.raf=requestAnimationFrame(mgLoop);return}}
+      if(!MG.t0)MG.t0=ts;
+      const raw=((ts-MG.t0)%MG_LOOP)/MG_LOOP;
+      const u=MG.fixedU!=null?MG.fixedU:Math.min(1,Math.max(0,(raw-.06)/.88));
+      mgRender(u);
+      MG.raf=requestAnimationFrame(mgLoop);
+    }
+    function mgMeasure(){
+      const c=MG.c,a=c?c.getBoundingClientRect():null;
+      if(!c||!a||a.width<2||a.height<2)return false;
+      const dpr=Math.min(window.devicePixelRatio||1,2);
+      MG.W=Math.round(a.width);MG.H=Math.round(a.height);
+      c.width=Math.round(MG.W*dpr);c.height=Math.round(MG.H*dpr);
+      MG.ctx=c.getContext('2d');MG.ctx.setTransform(dpr,0,0,dpr,0,0);
+      MG.f=(MG.H/2)/Math.tan(MG_VFOV/2);
+      return true;
+    }
+    function mgMeasurePlan(){
+      const c=MG.plan,a=c?c.getBoundingClientRect():null;
+      if(!c||!a||a.width<2||a.height<2)return false;
+      const dpr=Math.min(window.devicePixelRatio||1,2);
+      c.width=Math.round(a.width*dpr);c.height=Math.round(a.height*dpr);
+      MG.pctx=c.getContext('2d');MG.pctx.setTransform(dpr,0,0,dpr,0,0);
+      MG.pw=a.width;MG.ph=a.height;return true;
+    }
+    function mgPlanFit(index){
+      const pts=[];
+      for(let i=0;i<=16;i++){const s=mgCamState(index,i/16);pts.push([s.x,s.z],[s.px,s.pz])}
+      const xs=pts.map(p=>p[0]),zs=pts.map(p=>p[1]);
+      const minx=Math.min(...xs),maxx=Math.max(...xs),minz=Math.min(...zs),maxz=Math.max(...zs);
+      MG.fit={cx:(minx+maxx)/2,cz:(minz+maxz)/2,w:Math.max(2.4,maxx-minx),h:Math.max(2.4,maxz-minz)};
+      MG.side=(index===5||index===6);
+    }
+    function mgPlan(cam,u){
+      const ctx=MG.pctx;if(!ctx||!MG.fit)return;
+      const W=MG.pw,H=MG.ph;
+      ctx.clearRect(0,0,W,H);
+      if(MG.idx>=8){mgPlanTime(u);return}
+      if(MG.side){
+        const z0=Math.min(0,cam.z)-.45,z1=Math.max(0,cam.z)+.55;
+        const s=Math.min((W-26)/(z1-z0),(H-28)/1.9),ox=13-z0*s,base=H-14;
+        const toP=(z,y)=>[ox+z*s,base-y*s];
+        const floor=toP(0,0)[1];
+        ctx.strokeStyle='#26332a';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(ox-10,floor);ctx.lineTo(ox+2.4*s,floor);ctx.stroke();
+        const foot=toP(0,0),head=toP(0,1.68);
+        ctx.strokeStyle='#d8f6a4';ctx.lineWidth=2.4;
+        ctx.beginPath();ctx.moveTo(foot[0],foot[1]);ctx.lineTo(head[0],head[1]);ctx.stroke();
+        ctx.fillStyle='#d8f6a4';ctx.beginPath();ctx.arc(head[0],head[1]-3.5,4.5,0,7);ctx.fill();
+        const cp=toP(cam.z,cam.y);
+        ctx.strokeStyle='#d8f6a455';ctx.lineWidth=1;ctx.beginPath();
+        for(const sign of[-1,1]){
+          const a=-Math.PI/2+sign*MG_VFOV/2,p=toP(cam.z+Math.cos(a)*2.2,cam.y+Math.sin(a)*2.2);
+          ctx.moveTo(cp[0],cp[1]);ctx.lineTo(p[0],p[1]);
+        }
+        ctx.stroke();
+        ctx.setLineDash([2,3]);ctx.strokeStyle='#d8f6a477';
+        ctx.beginPath();ctx.moveTo(cp[0],cp[1]);ctx.lineTo(head[0],head[1]);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='#d8f6a4';ctx.beginPath();
+        ctx.moveTo(cp[0]-7,cp[1]);ctx.lineTo(cp[0]+5,cp[1]-5.5);ctx.lineTo(cp[0]+5,cp[1]+5.5);ctx.closePath();ctx.fill();
+        const y0=mgCamState(MG.idx,0).y,y1=mgCamState(MG.idx,1).y;
+        const a0=toP(cam.z,y0),a1=toP(cam.z,y1);
+        ctx.setLineDash([2,3]);ctx.strokeStyle='#d8f6a480';ctx.lineWidth=1.2;
+        ctx.beginPath();ctx.moveTo(a0[0],a0[1]);ctx.lineTo(a1[0],a1[1]);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle='#d8f6a4';
+        ctx.beginPath();ctx.arc(a0[0],a0[1],2.2,0,7);ctx.fill();
+        const dir=y1>y0?-1:1;
+        ctx.beginPath();ctx.moveTo(a1[0],a1[1]+dir*5.5);ctx.lineTo(a1[0]-3.4,a1[1]+dir*10);ctx.lineTo(a1[0]+3.4,a1[1]+dir*10);ctx.closePath();ctx.fill();
+          return;
+      }
+      const padX=9,padY=9;
+      const s=Math.min((W-padX*2)/(MG.fit.w+1.5),(H-padY*2)/(MG.fit.h+1.5));
+      const ox=W/2-MG.fit.cx*s,oy=H/2-MG.fit.cz*s;
+      const toP=(x,z)=>[ox+x*s,oy+z*s];
+      const gx0=Math.floor(MG.fit.cx-MG.fit.w/2-1),gx1=Math.ceil(MG.fit.cx+MG.fit.w/2+1);
+      const gz0=Math.floor(MG.fit.cz-MG.fit.h/2-1),gz1=Math.ceil(MG.fit.cz+MG.fit.h/2+1);
+      const step=s>26?1:(s>13?2:4);
+      ctx.strokeStyle='#232f26';ctx.lineWidth=1;
+      for(let gx=Math.ceil(gx0/step)*step;gx<=gx1;gx+=step){
+        const a=toP(gx,gz0),b=toP(gx,gz1);
+        ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+      }
+      for(let gz=Math.ceil(gz0/step)*step;gz<=gz1;gz+=step){
+        const c=toP(gx0,gz),d=toP(gx1,gz);
+        ctx.beginPath();ctx.moveTo(c[0],c[1]);ctx.lineTo(d[0],d[1]);ctx.stroke();
+      }
+      const path=[];for(let i=0;i<=48;i++){const st=mgCamState(MG.idx,i/48);path.push(toP(st.x,st.z))}
+      ctx.strokeStyle='#3c523f';ctx.lineWidth=1.3;ctx.setLineDash([3,3]);ctx.beginPath();
+      path.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();ctx.setLineDash([]);
+      ctx.strokeStyle='#d8f6a4';ctx.lineWidth=2;ctx.beginPath();
+      path.forEach((p,i)=>{if(i/48<=u+1e-3){i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])}});ctx.stroke();
+      const camP=toP(cam.x,cam.z),perP=toP(cam.px,cam.pz);
+      if(MG.idx===4){
+        const s0=mgCamState(4,0),s1=mgCamState(4,1);
+        ctx.setLineDash([2,3]);ctx.strokeStyle='#9fc48a80';ctx.lineWidth=1.6;
+        ctx.beginPath();
+        const a0=toP(s0.px,s0.pz),a1=toP(s1.px,s1.pz);
+        ctx.moveTo(a0[0],a0[1]);ctx.lineTo(a1[0],a1[1]);ctx.stroke();ctx.setLineDash([]);
+        const cur=toP(cam.px,cam.pz),st=toP(s0.px,s0.pz);
+        ctx.strokeStyle='#d8f6a4aa';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(st[0],st[1]);ctx.lineTo(cur[0],cur[1]);ctx.stroke();
+      }
+      const hf=Math.atan(Math.tan(MG_VFOV/2)*(MG.W/Math.max(1,MG.H)));
+      ctx.strokeStyle='#d8f6a455';ctx.lineWidth=1;ctx.beginPath();
+      for(const sign of[-1,1]){
+        const a=cam.yaw+sign*hf,p=toP(cam.x+Math.sin(a)*2.4,cam.z+Math.cos(a)*2.4);
+        ctx.moveTo(camP[0],camP[1]);ctx.lineTo(p[0],p[1]);
+      }
+      ctx.stroke();
+      ctx.fillStyle='#d8f6a4';ctx.beginPath();ctx.arc(perP[0],perP[1],5.2,0,7);ctx.fill();
+      ctx.save();ctx.translate(camP[0],camP[1]);ctx.rotate(-cam.yaw+Math.PI);
+      ctx.fillStyle='#d8f6a4';ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(6,5.6);ctx.lineTo(-6,5.6);ctx.closePath();ctx.fill();ctx.restore();
+    }
+    function mgPlanTime(u){
+      const ctx=MG.pctx,W=MG.pw,H=MG.ph;
+      const y=H*.54,x0=16,x1=W-16,dense=MG.idx===8;
+      ctx.strokeStyle='#2c3b2f';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
+      const n=dense?22:6;
+      if(dense){
+        ctx.strokeStyle='#3d5342';
+        for(let i=0;i<=n;i++){
+          const x=x0+(x1-x0)*i/n;
+          ctx.beginPath();ctx.moveTo(x,y-7);ctx.lineTo(x,y+7);ctx.stroke();
+        }
+        ctx.strokeStyle='#26332a';
+        ctx.beginPath();ctx.moveTo(x0,y-9);ctx.lineTo(x1,y-9);ctx.moveTo(x0,y+9);ctx.lineTo(x1,y+9);ctx.stroke();
+      }else{
+        for(let i=0;i<=n;i++){
+          const x=x0+(x1-x0)*i/n;
+          ctx.fillStyle='#3d5342';ctx.beginPath();ctx.arc(x,y,2.4,0,7);ctx.fill();
+        }
+      }
+      const x=x0+(x1-x0)*u;
+      ctx.strokeStyle='#d8f6a455';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x,y-10);ctx.lineTo(x,y+10);ctx.stroke();
+      ctx.fillStyle='#d8f6a4';ctx.beginPath();ctx.arc(x,y,dense?5.5:4.5,0,7);ctx.fill();
+      ctx.strokeStyle='#d8f6a433';ctx.beginPath();ctx.arc(x,y,dense?10:9,0,7);ctx.stroke();
+    }
+var MG_INFO=[
+      ['俯视机位图','机位沿轴线前推：主体由小变大，前后景产生视差'],
+      ['俯视机位图','机位沿轴线后拉：主体由大变小，更多环境进入画面'],
+      ['俯视机位图','机位不动，云台转动：画面向相反方向扫动'],
+      ['俯视机位图','机位横向平移：主体位置不变，背景反向流动'],
+      ['俯视机位图','机位与人同速同向移动：主体大小与位置都保持稳定'],
+      ['侧视机位图','机位从脚部垂直升到头部，仰角逐渐变为平视'],
+      ['侧视机位图','机位从头部垂直降到脚部，俯视逐渐变为仰视'],
+      ['俯视机位图','机位绕主体画弧，同时持续对准主体'],
+      ['时间轴','高帧率拍摄、慢速播放：时间被拉长，机位不动'],
+      ['时间轴','间隔采样、连续播放：把长时间变化压缩成几秒']
+    ];
+    function mgStart(index){
+      if(MG.idx===index&&MG.active&&MG.raf)return;
+      MG.idx=index;MG.active=true;MG.t0=0;
+      const info=MG_INFO[index];
+      const t=document.querySelector('#mpTitle'),n=document.querySelector('#mpNote');
+      if(info&&t&&n){t.textContent=info[0];n.textContent=info[1]}
+      if(!MG.c){
+        MG.c=document.querySelector('#mgCanvas');MG.plan=document.querySelector('#mgPlan');
+        if(MG.c&&!MG.ro){MG.ro=new ResizeObserver(()=>mgResize());MG.ro.observe(MG.c)}
+      }
+      MG.W=0;MG.H=0;mgPlanFit(index);
+      cancelAnimationFrame(MG.raf);
+      requestAnimationFrame(()=>{mgMeasure();mgMeasurePlan();MG.raf=requestAnimationFrame(mgLoop)});
+    }
+    function mgStop(){MG.active=false;cancelAnimationFrame(MG.raf);MG.raf=0}
+    function mgResize(){
+      if(!MG||!MG.c||MG.frozen)return;
+      MG.W=0;MG.H=0;
+      if(mgMeasure()){mgMeasurePlan();if(MG.active)mgRender(MG.fixedU!=null?MG.fixedU:.5)}
+    }
+
+/* ===== 构图场景渲染 v3：统一编辑插画风格，16:9 / 9:16 自适应 ===== */
+(function(){
+  const POSE = {front:[364,1429], side:[269,1428], walk:[391,1416], back:[340,1426], gesture:[395,1396]};
+  const N = v => Math.round(v*10)/10;
+
+  function personMarkup(o, R){
+    const [w0,h0] = POSE[o.pose], h = o.h*R, w = h*w0/h0;
+    const cx = o.cx*1000, x = cx-w/2, y = o.feet*R-h;
+    const flip = o.flip ? ` transform="translate(${N(2*cx)} 0) scale(-1 1)"` : '';
+    return `<g${flip}>
+      <ellipse cx="${N(cx)}" cy="${N(o.feet*R)}" rx="${N(w*0.80)}" ry="${N(h*0.028)}" fill="url(#csSh)"/>
+      <image href="./composition/poses/p-${o.pose}.webp" x="${N(x)}" y="${N(y)}" width="${N(w)}" height="${N(h)}" preserveAspectRatio="none"/>
+    </g>`;
+  }
+
+  const defs = R => `<defs>
+      <radialGradient id="csSh" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#1f1a12" stop-opacity="0.50"/><stop offset="0.55" stop-color="#1f1a12" stop-opacity="0.18"/><stop offset="1" stop-color="#1f1a12" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="csVig" cx="0.5" cy="0.44" r="0.82">
+        <stop offset="0.55" stop-color="#12110d" stop-opacity="0"/><stop offset="1" stop-color="#12110d" stop-opacity="0.26"/>
+      </radialGradient>
+      <filter id="b6" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="${N(R*0.010)}"/></filter>
+      <filter id="b14" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur stdDeviation="${N(R*0.028)}"/></filter>
+      <filter id="b30" x="-45%" y="-45%" width="190%" height="190%"><feGaussianBlur stdDeviation="${N(R*0.07)}"/></filter>
+      <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+    </defs>`;
+
+  const SCENES = [
+    /* 0 三分法：城市空中步道 */
+    R => ({
+      sub: {pose:'front', cx:0.667, feet:0.89, h:0.62},
+      art: `
+        <defs>
+          <linearGradient id="s0sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f9dc0"/><stop offset=".42" stop-color="#a9c7d3"/><stop offset=".75" stop-color="#dfe5d6"/><stop offset="1" stop-color="#efe4cd"/></linearGradient>
+          <linearGradient id="s0deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a2aa9e"/><stop offset=".30" stop-color="#949d91"/><stop offset="1" stop-color="#77806f"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s0sky)"/>
+        <ellipse cx="810" cy="${R*.22}" rx="240" ry="${R*.12}" fill="#fff3d2" opacity=".42" filter="url(#b30)"/>
+        <g fill="#ffffff" opacity=".38" filter="url(#b14)">
+          <ellipse cx="170" cy="${R*.15}" rx="120" ry="${R*.028}"/><ellipse cx="660" cy="${R*.10}" rx="100" ry="${R*.024}"/>
+        </g>
+        <g fill="#7b96a6" opacity=".72">
+          <rect x="18" y="${R*.455}" width="50" height="${R*.165}"/><rect x="82" y="${R*.49}" width="28" height="${R*.13}"/>
+          <rect x="124" y="${R*.425}" width="64" height="${R*.195}"/><rect x="202" y="${R*.485}" width="32" height="${R*.135}"/>
+          <rect x="248" y="${R*.45}" width="46" height="${R*.17}"/><rect x="614" y="${R*.445}" width="56" height="${R*.175}"/>
+          <rect x="684" y="${R*.49}" width="32" height="${R*.13}"/><rect x="730" y="${R*.425}" width="68" height="${R*.195}"/>
+          <rect x="812" y="${R*.485}" width="38" height="${R*.135}"/><rect x="864" y="${R*.45}" width="58" height="${R*.17}"/>
+          <rect x="936" y="${R*.49}" width="46" height="${R*.13}"/>
+        </g>
+        <g fill="#5f7f68" opacity=".72" filter="url(#b6)">
+          <path d="M0 ${R*.615}q60 ${-R*.035} 120 0t120 0q60 ${R*.02} 120 0t120 0v${R*.04}H0Z"/>
+          <path d="M560 ${R*.615}q70 ${-R*.030} 140 0t140 0q60 ${R*.02} 140 0v${R*.04}H560Z"/>
+        </g>
+        <rect y="${R*.625}" width="1000" height="${R*.375}" fill="url(#s0deck)"/>
+        <g stroke="#ffffff" stroke-opacity=".16" stroke-width="${R*.004}" fill="none">
+          <path d="M0 ${R*.71}H1000M0 ${R*.80}H1000M0 ${R*.905}H1000"/>
+        </g>
+        <g stroke="#6b7d84" stroke-width="${R*.009}" fill="none" stroke-linecap="round">
+          <path d="M0 ${R*.585}H1000"/>
+          <path d="M0 ${R*.548}H1000" stroke-width="${R*.006}" opacity=".8"/>
+        </g>
+        <g stroke="#6b7d84" stroke-width="${R*.007}" fill="none" opacity=".85">
+          ${Array.from({length:14},(_,i)=>`<path d="M${N(20+i*74)} ${R*.545}v${R*.052}"/>`).join('')}
+        </g>
+        <rect y="${R*.618}" width="1000" height="${R*.012}" fill="#ffffff" opacity=".22"/>`
+    }),
+    /* 1 中心构图：影棚 */
+    R => ({
+      sub: {pose:'front', cx:0.5, feet:0.94, h:0.68},
+      art: `
+        <defs>
+          <radialGradient id="s1wall" cx="0.48" cy="0.34" r="0.85"><stop offset="0" stop-color="#ded4c1"/><stop offset=".58" stop-color="#cdc2ae"/><stop offset="1" stop-color="#9d9280"/></radialGradient>
+          <linearGradient id="s1flr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ada18c"/><stop offset="1" stop-color="#786e5c"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s1wall)"/>
+        <ellipse cx="470" cy="${R*.36}" rx="300" ry="${R*.30}" fill="#fff6e4" opacity=".30" filter="url(#b30)"/>
+        <ellipse cx="900" cy="${R*.14}" rx="200" ry="${R*.22}" fill="#ffeecd" opacity=".16" filter="url(#b30)"/>
+        <rect y="${R*.862}" width="1000" height="${R*.138}" fill="url(#s1flr)"/>
+        <rect y="${R*.856}" width="1000" height="${R*.010}" fill="#fff" opacity=".16"/>
+        <ellipse cx="500" cy="${R*.93}" rx="180" ry="${R*.035}" fill="#fff6e2" opacity=".16" filter="url(#b14)"/>
+        <path d="M0 ${R*.46}H1000" stroke="#ffffff" stroke-opacity=".10" stroke-width="${N(R*.004)}" fill="none"/>`
+    }),
+    /* 2 对称构图：柱廊 */
+    R => ({
+      sub: {pose:'front', cx:0.5, feet:0.92, h:0.60},
+      art: `
+        <defs>
+          <linearGradient id="s2back" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c9078"/><stop offset=".5" stop-color="#b8ac92"/><stop offset="1" stop-color="#8d8168"/></linearGradient>
+          <linearGradient id="s2col" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6e6250"/><stop offset=".14" stop-color="#a6997f"/><stop offset=".5" stop-color="#ccc0a5"/><stop offset=".84" stop-color="#9b8f75"/><stop offset="1" stop-color="#615645"/></linearGradient>
+          <linearGradient id="s2flr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b3a68c"/><stop offset=".40" stop-color="#93876f"/><stop offset="1" stop-color="#5e5544"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s2back)"/>
+        <g fill="none" stroke="#8b7d64" stroke-width="${R*.012}" opacity=".55">
+          <path d="M0 ${R*.30}H1000M0 ${R*.55}H1000"/>
+        </g>
+        <g fill="none" stroke="#6f6450" stroke-width="${R*.02}">
+          <path d="M0 ${R*.055}H1000"/>
+        </g>
+        <rect x="420" y="${R*.08}" width="160" height="${R*.78}" fill="#6f654f" opacity=".16"/>
+        <rect x="452" y="${R*.10}" width="96" height="${R*.74}" fill="#efe3c4" opacity=".38" filter="url(#b14)"/>
+        <g fill="#7a6d55" opacity=".26">
+          ${[0.165,0.320,0.500,0.680,0.835].map(x=>`<path d="M${N(x*1000-52)} ${R*.46}V${R*.28}a52 ${N(R*.115)} 0 0 1 104 0V${R*.46}Z"/>`).join('')}
+        </g>
+        ${[0.085,0.245,0.395,0.605,0.755,0.915].map((x,i)=>{
+          const w = (i===0||i===5) ? 58 : 46, cx0 = x*1000;
+          return `<g>
+            <rect x="${N(cx0-w/2)}" y="${R*.085}" width="${N(w)}" height="${R*.775}" fill="url(#s2col)"/>
+            <rect x="${N(cx0-w/2-11)}" y="${R*.085}" width="${N(w+22)}" height="${R*.030}" fill="#b7aa8f"/>
+            <rect x="${N(cx0-w/2-11)}" y="${R*.830}" width="${N(w+22)}" height="${R*.030}" fill="#a2957a"/>
+            <rect x="${N(cx0-w/2)}" y="${R*.085}" width="${N(w*0.16)}" height="${R*.775}" fill="#ffffff" opacity=".10"/>
+            <rect x="${N(cx0+w/2-w*0.18)}" y="${R*.085}" width="${N(w*0.18)}" height="${R*.775}" fill="#000000" opacity=".16"/>
+            <ellipse cx="${N(cx0)}" cy="${R*.868}" rx="${N(w*0.80)}" ry="${R*.013}" fill="#241f16" opacity=".38" filter="url(#b6)"/>
+          </g>`}).join('')}
+        <rect y="${R*.858}" width="1000" height="${R*.142}" fill="url(#s2flr)"/>
+        <g stroke="#ffffff" stroke-opacity=".10" stroke-width="${R*.004}" fill="none"><path d="M0 ${R*.915}H1000M0 ${R*.97}H1000"/></g>
+        <g fill="#ffffff" opacity=".12">
+          ${[0.245,0.395,0.605,0.755].map(x=>`<path d="M${N(x*1000-26)} ${R*.862}h52v${R*.138}h-52Z"/>`).join('')}
+        </g>`
+    }),
+    /* 3 对角线：斜坡台阶 */
+    R => {
+      const H = R, y0 = R*1.18, y1 = R*0.12, dy = y0-y1, band = R*0.34;
+      const steps = Array.from({length:14},(_,i)=>{
+        const t = (i+0.5)/14, x = t*1000, y = y0 - dy*t;
+        return `<path d="M${N(x)} ${N(y-band/2)}v${N(band)}" stroke="#2a2114" stroke-opacity=".16" stroke-width="${N(R*.006)}" fill="none"/>`;
+      }).join('');
+      return {
+        sub: {pose:'walk', cx:0.40, feet:0.60, h:0.44},
+        art: `
+        <defs>
+          <linearGradient id="s3sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f9bc0"/><stop offset=".5" stop-color="#b2ccd2"/><stop offset="1" stop-color="#e6dfcc"/></linearGradient>
+          <linearGradient id="s3st" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#6b6047"/><stop offset=".5" stop-color="#a2957a"/><stop offset="1" stop-color="#c9bda2"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${H}" fill="url(#s3sky)"/>
+        <ellipse cx="150" cy="${H*.18}" rx="230" ry="${H*.12}" fill="#fff2cc" opacity=".30" filter="url(#b30)"/>
+        <path d="M0 ${H*.62}q200 ${-H*.13} 430 ${H*.02}t570 ${-H*.05}V${H}H0Z" fill="#7e9375" opacity=".70"/>
+        <path d="M0 ${N(y0)}L1000 ${N(y1)}V${N(y1+band)}L0 ${N(y0+band)}Z" fill="url(#s3st)"/>
+        ${steps}
+        <path d="M0 ${N(y0-band/2)}L1000 ${N(y1-band/2)}" stroke="#e2d8bd" stroke-width="${N(R*.009)}" fill="none"/>
+        <path d="M0 ${N(y0-band/2-R*.007)}L1000 ${N(y1-band/2-R*.007)}" stroke="#5f5442" stroke-width="${N(R*.004)}" fill="none" opacity=".7"/>
+        <g stroke="#6a7280" stroke-width="${N(R*.006)}" fill="none" opacity=".72">
+          <path d="M20 ${N(y0-band/2-R*.30)}L990 ${N(y1-band/2-R*.30)}"/>
+          ${Array.from({length:10},(_,i)=>{const t=(i+0.5)/10,x=t*1000,y=(y0-dy*t)-band/2-R*.30;return `<path d="M${N(x)} ${N(y)}v${N(R*.29)}"/>`}).join('')}
+        </g>
+        <path d="M0 ${H}L0 ${N(y0+band)}L1000 ${N(y1+band)}L1000 ${H}Z" fill="#4e4636" opacity=".45"/>`
+      };
+    },
+    /* 4 引导线：透视路 */
+    R => ({
+      sub: {pose:'front', cx:0.5, feet:0.50, h:0.30},
+      art: `
+        <defs>
+          <linearGradient id="s4sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7aa4c2"/><stop offset=".65" stop-color="#c6dad9"/><stop offset="1" stop-color="#f0e4cd"/></linearGradient>
+          <linearGradient id="s4gnd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a3a396"/><stop offset=".35" stop-color="#94948a"/><stop offset="1" stop-color="#6a6a60"/></linearGradient>
+          <linearGradient id="s4road" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9c1ab"/><stop offset=".40" stop-color="#b3ab95"/><stop offset="1" stop-color="#8a8370"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s4sky)"/>
+        <g fill="#ffffff" opacity=".30" filter="url(#b14)"><ellipse cx="230" cy="${R*.17}" rx="150" ry="${R*.04}"/><ellipse cx="740" cy="${R*.12}" rx="120" ry="${R*.03}"/></g>
+        <rect y="${R*.455}" width="1000" height="${R*.545}" fill="url(#s4gnd)"/>
+        <g fill="#61795c" opacity=".8">
+          <path d="M0 ${R*.455}q60 ${-R*.05} 120 0t120 0v${R*.052}H0Z"/>
+          <path d="M760 ${R*.455}q60 ${-R*.05} 120 0t120 0v${R*.052}H760Z"/>
+        </g>
+        <g fill="#7d93a0" opacity=".55">
+          <rect x="330" y="${R*.335}" width="44" height="${R*.12}"/><rect x="384" y="${R*.372}" width="24" height="${R*.083}"/>
+          <rect x="612" y="${R*.340}" width="50" height="${R*.115}"/><rect x="672" y="${R*.376}" width="26" height="${R*.079}"/>
+        </g>
+        <path d="M432 ${R*.455}L40 ${R}H960L568 ${R*.455}Z" fill="url(#s4road)"/>
+        <g stroke="#7e7660" stroke-width="${R*.008}" fill="none" opacity=".7">
+          <path d="M432 ${R*.455}L40 ${R}M568 ${R*.455}L960 ${R}"/>
+        </g>
+        <path d="M500 ${R*.455}V${R}" stroke="#f7f2e2" stroke-opacity=".55" stroke-width="${R*.007}" stroke-dasharray="${R*.030} ${R*.040}" fill="none"/>
+        <g stroke="#8d9480" stroke-width="${R*.006}" fill="none" opacity=".45">
+          ${Array.from({length:6},(_,i)=>{const t=Math.pow((i+1)/6,2.2);const y=R*(.455+.545*t);const half=50+330*t;return `<path d="M${N(500-half)} ${N(y)}h${N(2*half)}"/>`}).join('')}
+        </g>
+        <g stroke="#5c6653" stroke-width="${R*.005}" fill="none" opacity=".85">
+          <path d="M406 ${R*.455}L4 ${R}M594 ${R*.455}L996 ${R}"/>
+          ${Array.from({length:8},(_,i)=>{const t=Math.pow((i+1)/8,1.85);const y=R*(.455+.545*t);const xL=406-402*t,xR=594+402*t;
+            return `<path d="M${N(xL)} ${N(y)}v${N(-R*.048*(1-t*0.45))}M${N(xR)} ${N(y)}v${N(-R*.048*(1-t*0.45))}"/>`}).join('')}
+        </g>
+        <ellipse cx="500" cy="${R*.452}" rx="110" ry="${R*.016}" fill="#ffffff" opacity=".22" filter="url(#b6)"/>`
+    }),
+    /* 5 框架：门框 */
+    R => ({
+      sub: {pose:'front', cx:0.5, feet:0.855, h:0.50},
+      art: `
+        <defs>
+          <linearGradient id="s5wall" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9b795"/><stop offset=".55" stop-color="#b6a481"/><stop offset="1" stop-color="#8e7c5f"/></linearGradient>
+          <linearGradient id="s5in" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2d5b7"/><stop offset=".5" stop-color="#d6c6a4"/><stop offset="1" stop-color="#b6a381"/></linearGradient>
+          <linearGradient id="s5flr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c2af8c"/><stop offset="1" stop-color="#937f60"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s5wall)"/>
+        <rect x="150" y="${R*.115}" width="700" height="${R*.760}" fill="url(#s5in)"/>
+        <rect x="150" y="${R*.715}" width="700" height="${R*.160}" fill="url(#s5flr)"/>
+        <g stroke="#00000014" stroke-width="${R*.003}" fill="none">
+          ${Array.from({length:4},(_,i)=>`<path d="M150 ${R*(.745+i*.035)}H850"/>`).join('')}
+        </g>
+        <ellipse cx="500" cy="${R*.42}" rx="230" ry="${R*.26}" fill="#fff4dc" opacity=".40" filter="url(#b30)"/>
+        <g opacity=".95">
+          <rect x="206" y="${R*.600}" width="150" height="${R*.013}" fill="#9d8867"/>
+          <rect x="214" y="${R*.613}" width="10" height="${R*.042}" fill="#8a7556"/><rect x="338" y="${R*.613}" width="10" height="${R*.042}" fill="#8a7556"/>
+          <ellipse cx="700" cy="${R*.565}" rx="30" ry="${R*.038}" fill="#6f8463"/>
+          <ellipse cx="684" cy="${R*.585}" rx="20" ry="${R*.026}" fill="#5f7455"/>
+          <rect x="688" y="${R*.598}" width="24" height="${R*.062}" fill="#9a8464"/>
+        </g>
+        <g fill="none" stroke="#8a7659" stroke-width="${R*.020}">
+          <rect x="150" y="${R*.115}" width="700" height="${R*.760}"/>
+        </g>
+        <rect x="150" y="${R*.104}" width="700" height="${R*.014}" fill="#9d8867"/>
+        <rect x="150" y="${R*.862}" width="700" height="${R*.014}" fill="#7e6a4d"/>
+        <g fill="#00000022"><rect x="0" y="0" width="150" height="${R}"/><rect x="850" y="0" width="150" height="${R}"/></g>`
+    }),
+    /* 6 前景：虚化枝叶 */
+    R => ({
+      sub: {pose:'front', cx:0.58, feet:0.90, h:0.54},
+      art: `
+        <defs>
+          <linearGradient id="s6bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe6cf"/><stop offset=".40" stop-color="#bccbac"/><stop offset="1" stop-color="#8b9c7c"/></linearGradient>
+          <linearGradient id="s6path" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d3cab0"/><stop offset="1" stop-color="#a59980"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s6bg)"/>
+        <ellipse cx="700" cy="${R*.20}" rx="300" ry="${R*.16}" fill="#fffbe2" opacity=".35" filter="url(#b30)"/>
+        <g opacity=".82">
+          <g fill="#5f7a52">
+            <circle cx="352" cy="${R*.50}" r="${R*.070}"/><circle cx="410" cy="${R*.465}" r="${R*.082}"/>
+            <circle cx="468" cy="${R*.505}" r="${R*.064}"/><circle cx="300" cy="${R*.525}" r="${R*.052}"/>
+          </g>
+          <g fill="#74905f" opacity=".85">
+            <circle cx="376" cy="${R*.475}" r="${R*.045}"/><circle cx="438" cy="${R*.487}" r="${R*.038}"/>
+          </g>
+          <g fill="#5a7550">
+            <circle cx="812" cy="${R*.515}" r="${R*.075}"/><circle cx="876" cy="${R*.475}" r="${R*.088}"/>
+            <circle cx="936" cy="${R*.520}" r="${R*.066}"/><circle cx="762" cy="${R*.535}" r="${R*.050}"/>
+          </g>
+          <g fill="#7b976a" opacity=".85">
+            <circle cx="840" cy="${R*.487}" r="${R*.047}"/><circle cx="904" cy="${R*.500}" r="${R*.040}"/>
+          </g>
+          <g fill="#48603f" opacity=".55">
+            <circle cx="240" cy="${R*.545}" r="${R*.055}"/><circle cx="960" cy="${R*.545}" r="${R*.058}"/>
+          </g>
+        </g>
+        <g filter="url(#b14)" opacity=".35">
+          <ellipse cx="410" cy="${R*.585}" rx="130" ry="${R*.020}" fill="#33452a"/>
+          <ellipse cx="876" cy="${R*.600}" rx="120" ry="${R*.018}" fill="#33452a"/>
+        </g>
+        <path d="M580 ${R*.58}L318 ${R}H872L706 ${R*.58}Z" fill="url(#s6path)" opacity=".92"/>
+        <g stroke="#ffffff" stroke-opacity=".22" stroke-width="${N(R*.004)}" fill="none">
+          <path d="M556 ${R*.72}h116M536 ${R*.84}h156"/>
+        </g>
+        <g fill="#ffffff" opacity=".16" filter="url(#b14)">
+          ${[[210,0.28,24],[320,0.42,17],[690,0.30,26],[820,0.20,19],[520,0.16,14],[900,0.44,22]].map(([x,y,r])=>`<circle cx="${x}" cy="${R*y}" r="${r}"/>`).join('')}
+        </g>
+        <path d="M0 ${R*.88}Q300 ${R*.84}540 ${R*.90}Q780 ${R*.97}1000 ${R*.88}V${R}H0Z" fill="#5f7250" opacity=".85"/>
+        <g filter="url(#b6)">
+          <g fill="#3c5a33">
+            <path d="M-30 ${R*.06}q120 -10 150 ${R*.10}q20 ${R*.09} -40 ${R*.12}q-90 ${R*.04} -110 -${R*.22}Z"/>
+            <path d="M-40 ${R*.34}q110 -6 132 ${R*.12}q14 ${R*.08} -46 ${R*.10}q-80 ${R*.02} -86 -${R*.22}Z"/>
+            <path d="M-24 ${R*.62}q120 -4 140 ${R*.13}q12 ${R*.08} -52 ${R*.09}q-84 ${R*.01} -88 -${R*.22}Z"/>
+          </g>
+          <g stroke="#2b4524" stroke-width="${N(R*.005)}" fill="none" opacity=".6">
+            <path d="M-20 ${R*.10}q80 ${R*.03} 120 ${R*.10}M-30 ${R*.38}q76 ${R*.04} 108 ${R*.10}M-14 ${R*.66}q82 ${R*.03} 122 ${R*.10}"/>
+          </g>
+          <g fill="#4a6b3d" opacity=".9">
+            <path d="M-10 ${R*.86}q90 -18 128 ${R*.06}q16 ${R*.10} -60 ${R*.12}q-70 ${R*.01} -68 -${R*.18}Z"/>
+          </g>
+        </g>
+        <g filter="url(#b14)" opacity=".38"><ellipse cx="-20" cy="${R*.20}" rx="110" ry="${R*.13}" fill="#1e3318"/></g>`
+    }),
+    /* 7 三角形：吊灯 + 人物 + 绿植 */
+    R => ({
+      sub: {pose:'front', cx:0.22, feet:0.90, h:0.58},
+      art: `
+        <defs>
+          <linearGradient id="s7wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cabda4"/><stop offset=".72" stop-color="#bbad92"/><stop offset="1" stop-color="#a2947a"/></linearGradient>
+          <linearGradient id="s7flr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c8e74"/><stop offset="1" stop-color="#6f6450"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s7wall)"/>
+        <ellipse cx="500" cy="${R*.24}" rx="280" ry="${R*.20}" fill="#fff6da" opacity=".28" filter="url(#b30)"/>
+        <rect y="${R*.875}" width="1000" height="${R*.125}" fill="url(#s7flr)"/>
+        <rect y="${R*.872}" width="1000" height="${R*.006}" fill="#fff" opacity=".16"/>
+        <ellipse cx="500" cy="${R*.92}" rx="320" ry="${R*.05}" fill="#ffeec9" opacity=".10" filter="url(#b14)"/>
+        <path d="M500 0V${R*.135}" stroke="#463f31" stroke-width="${R*.005}" fill="none"/>
+        <path d="M466 ${R*.196}L500 ${R*.132}L534 ${R*.196}Z" fill="#655b49"/>
+        <path d="M466 ${R*.196}H534" stroke="#8b7f66" stroke-width="${N(R*.005)}" fill="none"/>
+        <ellipse cx="500" cy="${R*.212}" rx="40" ry="${R*.013}" fill="#fff4d4" opacity=".85"/>
+        <ellipse cx="500" cy="${R*.27}" rx="130" ry="${R*.09}" fill="#ffeec4" opacity=".28" filter="url(#b30)"/>
+        <g>
+          <path d="M806 ${R*.875}V${R*.615}q-46 ${-R*.09} -34 ${-R*.20}q36 ${R*.09} 52 ${R*.19}q8 ${-R*.19} 46 ${-R*.25}q12 ${R*.15} -22 ${R*.27}q40 ${-R*.05} 60 ${R*.07}q-32 ${R*.06} -66 ${R*.03}V${R*.875}Z" fill="#3e5b3b"/>
+          <g stroke="#2c4129" stroke-width="${N(R*.004)}" fill="none" opacity=".5">
+            <path d="M800 ${R*.70}q20 ${R*.04} 34 ${R*.10}M826 ${R*.60}q14 ${R*.02} 24 ${R*.06}"/>
+          </g>
+          <path d="M772 ${R*.875}h72l-10 -${R*.075}h-52Z" fill="#a08d6e"/>
+          <path d="M772 ${R*.798}h72l-2 -${R*.014}h-68Z" fill="#8b7a5e"/>
+          <ellipse cx="808" cy="${R*.878}" rx="50" ry="${R*.011}" fill="#26220f" opacity=".40" filter="url(#b6)"/>
+        </g>
+        <ellipse cx="500" cy="${R*.93}" rx="330" ry="${R*.045}" fill="#00000018" filter="url(#b14)"/>`
+    }),
+    /* 8 水平线：海天一线 */
+    R => ({
+      sub: {pose:'front', cx:0.70, feet:0.80, h:0.30},
+      art: `
+        <defs>
+          <linearGradient id="s8sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f9fbe"/><stop offset=".55" stop-color="#b9d3d9"/><stop offset="1" stop-color="#f4e6cb"/></linearGradient>
+          <linearGradient id="s8sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f8189"/><stop offset=".28" stop-color="#6f9b9c"/><stop offset=".68" stop-color="#9fb9a9"/><stop offset="1" stop-color="#cfd3b6"/></linearGradient>
+          <linearGradient id="s8sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0d0af"/><stop offset=".45" stop-color="#cfba95"/><stop offset="1" stop-color="#b09a76"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s8sky)"/>
+        <ellipse cx="250" cy="${R*.12}" rx="280" ry="${R*.09}" fill="#fff2ce" opacity=".48" filter="url(#b30)"/>
+        <g fill="#ffffff" opacity=".42" filter="url(#b14)">
+          <ellipse cx="170" cy="${R*.07}" rx="140" ry="${R*.022}"/><ellipse cx="640" cy="${R*.10}" rx="110" ry="${R*.018}"/>
+        </g>
+        <rect y="${R*.24}" width="1000" height="${R*.515}" fill="url(#s8sea)"/>
+        <rect y="${R*.238}" width="1000" height="${R*.006}" fill="#ffffff" opacity=".45"/>
+        <path d="M240 ${R*.24}L400 ${R*.735}H150Z" fill="#ffeec4" opacity=".14" filter="url(#b14)"/>
+        <g stroke="#ffffff" stroke-opacity=".20" stroke-width="${R*.003}" fill="none">
+          ${[0.262,0.288,0.318,0.352,0.392,0.44,0.496,0.56,0.632,0.70].map(y=>`<path d="M0 ${N(R*y)}H1000"/>`).join('')}
+        </g>
+        <g stroke="#2f5c62" stroke-opacity=".14" stroke-width="${R*.004}" fill="none">
+          ${[0.275,0.31,0.35,0.40,0.46,0.53,0.61].map((y,i)=>`<path d="M${i%2?60:200} ${N(R*y)}q140 ${N(-R*.005)} 280 0t280 0"/>`).join('')}
+        </g>
+        <path d="M0 ${R*.735}Q250 ${R*.706}520 ${R*.745}Q780 ${R*.782}1000 ${R*.738}V${R}H0Z" fill="url(#s8sand)"/>
+        <path d="M0 ${R*.742}Q250 ${R*.712}520 ${R*.752}Q780 ${R*.788}1000 ${R*.745}" stroke="#ffffff" stroke-opacity=".40" stroke-width="${R*.005}" fill="none"/>
+        <g stroke="#bfa886" stroke-opacity=".35" stroke-width="${R*.003}" fill="none">
+          <path d="M0 ${R*.85}Q280 ${R*.83}560 ${R*.86}"/><path d="M120 ${R*.93}Q420 ${R*.91}760 ${R*.94}"/>
+        </g>`
+    }),
+    /* 9 垂直线：柱与侧身人物 */
+    R => ({
+      sub: {pose:'side', cx:0.5, feet:0.95, h:0.72},
+      art: `
+        <defs>
+          <linearGradient id="s9wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfc2a8"/><stop offset=".7" stop-color="#b8a98d"/><stop offset="1" stop-color="#9a8b6f"/></linearGradient>
+          <linearGradient id="s9col" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#524734"/><stop offset=".12" stop-color="#9b8d6f"/><stop offset=".42" stop-color="#cabd9d"/><stop offset=".74" stop-color="#8f8168"/><stop offset="1" stop-color="#453b2c"/></linearGradient>
+          <linearGradient id="s9flr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ab9c82"/><stop offset="1" stop-color="#6f6350"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s9wall)"/>
+        <g fill="#00000014">
+          <rect x="182" y="${R*.06}" width="136" height="${R*.78}"/><rect x="682" y="${R*.06}" width="136" height="${R*.78}"/>
+        </g>
+        <g stroke="#00000010" stroke-width="${R*.003}" fill="none">
+          ${Array.from({length:6},(_,i)=>`<path d="M182 ${R*(.12+i*.11)}h136M682 ${R*(.12+i*.11)}h136"/>`).join('')}
+        </g>
+        <g fill="#6d7a80" opacity=".30">
+          <rect x="248" y="${R*.15}" width="124" height="${R*.50}"/><rect x="628" y="${R*.15}" width="124" height="${R*.50}"/>
+        </g>
+        <g stroke="#ffffff" stroke-opacity=".22" stroke-width="${N(R*.004)}" fill="none">
+          <path d="M310 ${R*.15}v${R*.50}M690 ${R*.15}v${R*.50}"/>
+          ${Array.from({length:3},(_,i)=>`<path d="M248 ${R*(.27+i*.12)}h124M628 ${R*(.27+i*.12)}h124"/>`).join('')}
+        </g>
+        ${[-0.06,0.32,0.68,1.06].map(x=>{
+          const cx0 = x*1000, w = 78;
+          return `<g>
+            <rect x="${N(cx0-w/2)}" y="0" width="${N(w)}" height="${R*.90}" fill="url(#s9col)"/>
+            <g stroke="#00000016" stroke-width="${R*.0035}" fill="none">
+              ${[0.32,0.44,0.56,0.68].map(f=>`<path d="M${N(cx0-w/2+w*f)} 0v${N(R*.90)}"/>`).join('')}
+            </g>
+            <rect x="${N(cx0-w/2-14)}" y="0" width="${N(w+28)}" height="${R*.042}" fill="#cabda0"/>
+            <rect x="${N(cx0-w/2-14)}" y="${R*.858}" width="${N(w+28)}" height="${R*.042}" fill="#ad9f82"/>
+          </g>`}).join('')}
+        <rect y="${R*.90}" width="1000" height="${R*.10}" fill="url(#s9flr)"/>
+        <g stroke="#ffffff" stroke-opacity=".10" stroke-width="${R*.004}" fill="none"><path d="M0 ${R*.95}H1000"/></g>`
+    }),
+    /* 10 黄金分割：窗光室内 */
+    R => ({
+      sub: {pose:'gesture', cx:0.618, feet:0.94, h:0.60},
+      art: `
+        <defs>
+          <linearGradient id="s10room" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9b8e78"/><stop offset=".42" stop-color="#bcaf98"/><stop offset="1" stop-color="#dbd0b9"/></linearGradient>
+          <linearGradient id="s10win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaea"/><stop offset=".55" stop-color="#f7eed6"/><stop offset="1" stop-color="#e8d9b9"/></linearGradient>
+          <linearGradient id="s10flr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a89a80"/><stop offset="1" stop-color="#7b6f5a"/></linearGradient>
+        </defs>
+        <rect width="1000" height="${R}" fill="url(#s10room)"/>
+        <rect x="676" y="${R*.085}" width="324" height="${R*.585}" fill="url(#s10win)"/>
+        <g fill="none" stroke="#7f6e53" stroke-width="${R*.010}">
+          <rect x="676" y="${R*.085}" width="324" height="${R*.585}"/>
+          <path d="M838 ${R*.085}v${R*.585}M676 ${R*.375}h324"/>
+        </g>
+        <path d="M676 ${R*.085}h324v${R*.11}l-324 ${R*.09}Z" fill="#ffffff" opacity=".38" filter="url(#b14)"/>
+        <rect y="${R*.67}" width="1000" height="${R*.034}" fill="#7d6d53" opacity=".45"/>
+        <rect y="${R*.704}" width="1000" height="${R*.296}" fill="url(#s10flr)"/>
+        <g stroke="#00000012" stroke-width="${R*.0035}" fill="none">
+          ${Array.from({length:4},(_,i)=>`<path d="M0 ${R*(.755+i*.065)}h1000"/>`).join('')}
+        </g>
+        <path d="M700 ${R*.706}L520 ${R*.95}H1000V${R*.706}Z" fill="#ffeec6" opacity=".20" filter="url(#b30)"/>
+        <g filter="url(#b6)">
+          <path d="M664 ${R*.085}q-34 ${R*.09}-6 ${R*.18}t4 ${R*.20}q-30 ${R*.11}-2 ${R*.24}" stroke="#b9a688" stroke-width="${R*.018}" fill="none"/>
+        </g>`
+    })
+  ];
+
+  window.renderCompScene = function(index){
+    const host = document.querySelector('#compScene');
+    if(!host) return;
+    const ratio = Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value) || 0.5625;
+    const R = 1000 / ratio;
+    const scene = SCENES[index] ? SCENES[index](R) : SCENES[0](R);
+    host.innerHTML = `<svg viewBox="0 0 1000 ${R.toFixed(1)}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      ${defs(R)}<g class="cs-art">${scene.art}</g><g class="cs-person">${personMarkup(scene.sub, R)}</g>
+      <rect width="1000" height="${R.toFixed(1)}" fill="url(#csVig)"/>
+      <rect width="1000" height="${R.toFixed(1)}" filter="url(#grain)" opacity="0.035"/>
+    </svg>`;
+  };
+})();
+
+    function showLesson(lesson){
+      selectedLesson=lesson;
+      document.querySelector('#lessonTitle').textContent=lesson.title;document.querySelector('#lessonTag').textContent=lesson.tag;document.querySelector('#lessonDescription').textContent=lesson.description;document.querySelector('#lessonSteps').replaceChildren(...lesson.steps.map(text=>{const chip=document.createElement('span');chip.className='step';chip.textContent=text;return chip}));document.querySelector('#frameLabel').textContent=lesson.label;
+      const model=document.querySelector('.scene-image'),scene=document.querySelector('#placeholder'),index=banks[activeKind].indexOf(lesson),isMotion=activeKind==='movement',isComposition=activeKind==='composition';scene.dataset.kind=activeKind;
+      const liveCamera=Boolean(stream),recordedPlayback=Boolean(recordedBlob&&video.getAttribute('src'));viewfinder.classList.toggle('on-light',(activeKind==='shot'||activeKind==='challenge')&&!liveCamera&&!recordedPlayback);document.querySelector('#placeholder').classList.toggle('hidden',isMotion||liveCamera||recordedPlayback);document.querySelector('#placeholder').classList.remove('ghost');const demo=document.querySelector('#motionDemo');demo.classList.toggle('hidden',!isMotion||recordedPlayback);demo.classList.toggle('compact',isMotion&&liveCamera);document.querySelector('#cameraMessage').classList.toggle('hidden',isMotion||liveCamera||recordedPlayback);
+      const compHost=document.querySelector('#compScene');if(isComposition){renderCompScene(index);compHost.classList.remove('hidden');model.style.display='none'}else{compHost.classList.add('hidden');model.style.display=''}const nextSrc=(!isMotion&&!isComposition)?actorSrc:null;if(nextSrc&&model.getAttribute('src')!==nextSrc)model.src=nextSrc;
+      if(!isMotion&&activeKind==='shot'){const f=shotFrames[index]||shotFrames[0];model.style.setProperty('--model-scale',f.scale);model.style.setProperty('--model-y',f.y.toFixed(2)+'%')}
+      if(!isMotion&&activeKind!=='shot'){model.style.setProperty('--model-width','100%');model.style.setProperty('--model-height','100%');model.style.setProperty('--model-x','0%');model.style.setProperty('--model-y','0%');model.style.setProperty('--model-scale',1);model.style.setProperty('--model-origin','50%')}
+      if(isMotion){const demo=document.querySelector('#motionDemo');demo.dataset.motion=index;demo.classList.toggle('compact',Boolean(stream));demo.setAttribute('aria-label',`${lesson.name}动态演示`);mgStart(index)}else{mgStop()}
+      document.querySelector('#motionPlan').classList.toggle('hidden',!isMotion||recordedPlayback);
+      document.querySelector('#guideLegend').classList.add('hidden');
+      const guideSvg=document.querySelector('#guideSvg'),ratio=Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value);
+      grid.classList.toggle('composition-guides',isComposition);guideSvg.innerHTML=isMotion?'':guides.composition[activeKind==='shot'?0:index];
+      if(ratio>=1)guideSvg.querySelectorAll('circle,text').forEach(element=>{const x=element.getAttribute('cx')||element.getAttribute('x'),y=element.getAttribute('cy')||element.getAttribute('y');element.setAttribute('transform',`translate(${x} ${y}) scale(1 ${ratio}) translate(${-x} ${-y})`)});
+    }
+    function showBank(kind){activeKind=kind;document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.kind===kind)));heading.textContent={composition:'构图练习',shot:'景别练习',movement:'镜头运动练习',challenge:'拍摄挑战'}[kind];const isCh=kind==='challenge';document.querySelector('#challengeCard').classList.toggle('hidden',!isCh);document.querySelector('.drill-heading').classList.toggle('hidden',isCh);drillList.classList.toggle('hidden',isCh);document.querySelector('.lesson').classList.toggle('hidden',isCh);document.querySelector('.note').classList.toggle('hidden',isCh);if(isCh){drillList.replaceChildren();showChallenge();return}drillList.replaceChildren(...banks[kind].map((lesson,index)=>{const button=document.createElement('button');button.type='button';button.className='drill-option';button.textContent=lesson.name;button.setAttribute('aria-pressed',String(index===0));button.addEventListener('click',()=>{drillList.querySelectorAll('.drill-option').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));showLesson(lesson)});return button}));showLesson(banks[kind][0])}
+    tabs.forEach(tab=>tab.addEventListener('click',()=>{tabs.forEach(item=>item.setAttribute('aria-selected',String(item===tab)));showBank(tab.dataset.kind)}));
+    showBank(activeKind);
+    if(location.hash.startsWith('#mg=')){const [mi,mu]=location.hash.slice(4).split(',').map(Number);MG.fixedU=mu;showBank('movement');showLesson(banks.movement[mi]);}
+    gridToggle.addEventListener('click',()=>{const visible=gridToggle.getAttribute('aria-checked')!=='true';gridToggle.setAttribute('aria-checked',String(visible));grid.classList.toggle('hidden',!visible)});
+    autoSaveToggle.addEventListener('click',()=>{autoSaveEnabled=autoSaveToggle.getAttribute('aria-checked')!=='true';autoSaveToggle.setAttribute('aria-checked',String(autoSaveEnabled));try{localStorage.setItem('qujingke-auto-save',String(autoSaveEnabled))}catch{}});
+    async function saveRecording(automatic=false){if(!recordedBlob||!recordingUrl)return;const type=recordedBlob.type||'video/webm',extension=type.includes('mp4')?'mp4':'webm',file=new File([recordedBlob],`qujingke-${new Date().toISOString().replace(/[:.]/g,'-')}.${extension}`,{type});try{if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'取景课拍摄练习'});clearRecordingPreview();showLesson(selectedLesson);recordStatus.textContent='系统保存菜单已完成，取景界面已恢复。点击“开启相机”继续拍摄。'}else if(automatic){recordStatus.textContent='浏览器无法自动打开保存菜单，视频已保留；请点“保存到手机”。'}else{const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();recordStatus.textContent='视频已下载；如未自动保存，请在浏览器菜单中选择保存视频或文件。'}}catch(error){if(error.name==='AbortError'){if(automatic)recordStatus.textContent='保存菜单已关闭，视频仍保留；如需保存，请点“保存到手机”。'}else if(automatic)recordStatus.textContent='浏览器未允许自动打开保存菜单，视频已保留；请点“保存到手机”。';else recordStatus.textContent='保存未完成，请重试或从视频播放菜单选择保存。'}}
+    function clearRecordingPreview(){if(recordingUrl)URL.revokeObjectURL(recordingUrl);recordingUrl=null;recordedBlob=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.style.display='none';video.controls=false;video.muted=true;video.load();saveButton.classList.add('hidden');cameraButton.disabled=false;cameraButton.textContent='开启相机';recordButton.disabled=true;recordButton.setAttribute('aria-pressed','false');recordButton.textContent='开始录制';aspectOptions.forEach(option=>option.disabled=false)}
+    cameraButton.addEventListener('click',async()=>{const message=document.querySelector('#cameraMessage');if(stream){stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;video.style.display='none';if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden','compact');message.classList.add('hidden')}else{document.querySelector('#placeholder').classList.remove('hidden');message.classList.remove('hidden')}cameraButton.textContent='开启相机';viewfinder.classList.toggle('on-light',activeKind==='shot'||activeKind==='challenge');document.querySelector('#placeholder').classList.remove('ghost');photoButton.disabled=true;if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden')}photoButton.disabled=true;recordButton.disabled=true;recordStatus.textContent='相机已关闭。视频只在本机处理，保存时不会上传。';return}if(!navigator.mediaDevices?.getUserMedia){message.textContent='当前环境无法访问相机，请用 HTTPS 地址在手机浏览器中打开';message.classList.remove('hidden');return}cameraButton.disabled=true;try{const nextStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:true});clearRecordingPreview();stream=nextStream;video.srcObject=stream;video.controls=false;video.style.display='block';document.querySelector('#placeholder').classList.toggle('hidden',activeKind!=='challenge');document.querySelector('#placeholder').classList.toggle('ghost',activeKind==='challenge'&&chTask&&(chTask.k==='shot'||chTask.k==='composition'));if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden');document.querySelector('#motionDemo').classList.add('compact')}else document.querySelector('#motionDemo').classList.add('hidden');viewfinder.classList.remove('on-light');message.classList.add('hidden');cameraButton.textContent='关闭相机';recordButton.disabled=false;photoButton.disabled=false;recordStatus.textContent='相机和麦克风已准备好，点击“开始录制”开始拍摄。'}catch(error){message.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':'暂时无法开启相机，请检查设备相机是否可用';message.classList.remove('hidden');recordStatus.textContent=message.textContent}finally{cameraButton.disabled=false}});
+async function rasterizeGuides(w,h){try{const svg=document.querySelector('#guideSvg');if(!svg||grid.classList.contains('hidden'))return null;const inner=svg.innerHTML.trim();if(!inner)return null;const style='.guide-line{fill:none;stroke:#f5f7ee;stroke-width:1.4}.guide-accent{fill:none;stroke:#d8f6a4;stroke-width:2.4}.guide-area{fill:#d8f6a4;fill-opacity:.18;stroke:#d8f6a4;stroke-width:2}.guide-dot{fill:#d8f6a4;fill-opacity:.9}.guide-dash{stroke-dasharray:3 2}.guide-text{fill:#fff;font-size:5px;font-weight:700;paint-order:stroke;stroke:#101411;stroke-width:1.4;stroke-linejoin:round}';const src=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${w}" height="${h}" preserveAspectRatio="none"><style>${style}</style>${inner}</svg>`;const url=URL.createObjectURL(new Blob([src],{type:'image/svg+xml'}));const img=new Image();img.src=url;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject});const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);return c}catch(error){return null}}
+        recordButton.addEventListener('click',()=>{if(recorder?.state==='recording'){stopByUser=true;recordButton.disabled=true;recordButton.textContent='正在生成视频…';recorder.stop();return}if(!stream||typeof MediaRecorder==='undefined'){recordStatus.textContent='此浏览器暂不支持视频录制。请使用较新的 Safari 或 Chrome。';return}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden');recordButton.disabled=false;recordButton.textContent='开始录制';recordStatus.textContent='已取消倒计时，可重新开始录制。';return}recordButton.disabled=false;recordButton.textContent='取消';let count=3;const cd=document.querySelector('#countdown');cd.textContent='3';cd.classList.remove('hidden');recordStatus.textContent='3 秒后开始录制…';countdownTimer=setInterval(()=>{count--;if(count>0){cd.textContent=String(count);recordStatus.textContent=count+' 秒后开始录制…'}else{clearInterval(countdownTimer);countdownTimer=0;cd.classList.add('hidden');beginRecording()}},1000)});async function beginRecording(){recordButton.disabled=true;recordStatus.textContent='正在检查音频轨道并准备录制。';try{const audioTracks=stream.getAudioTracks().filter(track=>track.readyState==='live'&&track.enabled);if(!audioTracks.length)throw new Error('No live microphone track');const ratio=Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value);const canvas=document.createElement('canvas');canvas.width=ratio>=1?1080:Math.round(1080*ratio);canvas.height=ratio>=1?Math.round(1080/ratio):1080;const context=canvas.getContext('2d');let guideLayer=null;try{guideLayer=await rasterizeGuides(canvas.width,canvas.height)}catch(error){guideLayer=null}let lastDrawTs=0;const draw=ts=>{if(ts-lastDrawTs>=31){lastDrawTs=ts;if(video.readyState>=2){const sourceRatio=video.videoWidth/video.videoHeight;let sx=0,sy=0,sw=video.videoWidth,sh=video.videoHeight;if(sourceRatio>ratio){sw=sh*ratio;sx=(video.videoWidth-sw)/2}else{sh=sw/ratio;sy=(video.videoHeight-sh)/2}context.drawImage(video,sx,sy,sw,sh,0,0,canvas.width,canvas.height);if(guideLayer)context.drawImage(guideLayer,0,0)}}drawFrame=requestAnimationFrame(draw)};draw();const canvasStream=canvas.captureStream(30);recordingStream=new MediaStream([...canvasStream.getVideoTracks(),...audioTracks]);const mimeType=['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4','video/webm;codecs=vp8,opus','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));recorder=new MediaRecorder(recordingStream,mimeType?{mimeType}:undefined);chunks=[];recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};recorder.onstop=()=>{cancelAnimationFrame(drawFrame);clearInterval(timer);clearTimeout(recordingCap);aspectOptions.forEach(option=>option.disabled=false);const type=recorder.mimeType||'video/webm';recordedBlob=new Blob(chunks,{type});if(!recordedBlob.size){stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream?.getTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent='没有生成视频，请重试。';recordButton.disabled=false;recordButton.textContent='开始录制';cameraButton.disabled=false;return}recordingUrl=URL.createObjectURL(recordedBlob);document.querySelector('#motionDemo').classList.add('hidden');video.pause();video.srcObject=null;video.src=recordingUrl;video.controls=true;video.muted=false;video.style.display='block';stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream?.getTracks().forEach(track=>track.stop());recordingStream=null;cameraButton.textContent='重新开启相机';cameraButton.disabled=false;document.querySelector('#placeholder').classList.add('hidden');document.querySelector('#cameraMessage').classList.add('hidden');recordButton.setAttribute('aria-pressed','false');recordButton.disabled=true;recordButton.textContent='开始录制';saveButton.classList.remove('hidden');recordStatus.textContent='录制完成。点击“保存到手机”并在系统面板中选择保存位置。';if(autoSaveEnabled&&stopByUser)void saveRecording(true);stopByUser=false};recorder.start(1000);stopByUser=false;aspectOptions.forEach(option=>option.disabled=true);recordButton.setAttribute('aria-pressed','true');recordButton.textContent='结束录制';cameraButton.disabled=true;recordButton.disabled=false;const started=Date.now();timer=setInterval(()=>{const seconds=Math.floor((Date.now()-started)/1000);recordStatus.textContent=`正在录制 · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`},500);recordingCap=setTimeout(()=>{if(recorder?.state==='recording'){stopByUser=true;recordButton.disabled=true;recordButton.textContent='正在生成视频…';recordStatus.textContent='已达最长录制时长 10 分钟，正在生成视频…';recorder.stop()}},600000)}catch(error){cancelAnimationFrame(drawFrame);clearInterval(timer);clearTimeout(recordingCap);recordingStream?.getVideoTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':error.message==='No live microphone track'?'没有检测到可用麦克风音轨，请重新开启相机并检查麦克风权限':'无法启动录制，请检查浏览器是否支持摄像头录制';recordButton.disabled=false;recordButton.textContent='开始录制';aspectOptions.forEach(option=>option.disabled=false)}finally{if(recorder?.state!=='recording')cameraButton.disabled=false}}
+    saveButton.addEventListener('click',()=>void saveRecording());
+    window.addEventListener('pagehide',()=>{clearInterval(poseTimer);if(recorder?.state==='recording')recorder.stop();stream?.getTracks().forEach(track=>track.stop());recordingStream?.getTracks().forEach(track=>track.stop());if(recordingUrl)URL.revokeObjectURL(recordingUrl)});
+(function(){
+      const hint=document.querySelector('#installHint'),text=document.querySelector('#installHintText'),btn=document.querySelector('#installBtn'),close=document.querySelector('#installClose');
+      let deferredPrompt=null;
+      const dismissed=(()=>{try{return localStorage.getItem('qujingke-install-dismissed')==='1'}catch(error){return false}})();
+      const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+      const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
+      function show(){hint.classList.remove('hidden')}
+      function dismiss(){hint.classList.add('hidden');try{localStorage.setItem('qujingke-install-dismissed','1')}catch(error){}}
+      window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredPrompt=event;if(!dismissed){text.textContent='安装取景课到手机：全屏打开、离线可用、不占桌面浏览器标签。';btn.classList.remove('hidden');show()}});
+      btn.addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();try{await deferredPrompt.userChoice}catch(error){}deferredPrompt=null;dismiss()});
+      window.addEventListener('appinstalled',dismiss);
+      close.addEventListener('click',dismiss);
+      if(!dismissed&&!standalone&&isIOS&&!deferredPrompt)show();
+    })();
+    /* ================= 取景器增强：参考线样式 + 电子水平仪 ================= */
+    function currentRatio(){return Number(document.querySelector('.aspect-option[aria-pressed="true"]').dataset.value)}
+    const guideSvgEl=document.querySelector('#guideSvg');
+    let guideOverride='lesson';
+    function guideThirds(){return '<path class="guide-line" d="M33.3 0v100M66.7 0v100M0 33.3h100M0 66.7h100"/>'}
+    function guideCenter(){return '<path class="guide-line" d="M50 0v100M0 50h100"/><circle class="guide-dot" cx="50" cy="50" r="2.4"/>'}
+    function guideDiagonal(){return '<path class="guide-line" d="M0 0L100 100M0 100L100 0"/><circle class="guide-dot" cx="50" cy="50" r="1.8"/>'}
+    function guideGolden(){
+      const x1=38.2,x2=61.8;
+      let out='<path class="guide-line" d="M'+x1+' 0v100M'+x2+' 0v100M0 38.2h100M0 61.8h100"/>';
+      [[x1,38.2],[x2,38.2],[x1,61.8],[x2,61.8]].forEach(p=>{
+        out+='<circle class="guide-dot" cx="'+p[0]+'" cy="'+p[1]+'" r="1.7"/>';
+      });
+      return out;
+    }
+    function applyGuideOverride(){
+      if(guideOverride==='lesson')return;
+      if(guideOverride==='off'){guideSvgEl.innerHTML='';return}
+      guideSvgEl.innerHTML=guideOverride==='thirds'?guideThirds():guideOverride==='center'?guideCenter():guideOverride==='diagonal'?guideDiagonal():guideGolden();
+    }
+    const guideChips=[...document.querySelectorAll('.guide-chip[data-guide]')];
+    guideChips.forEach(chip=>chip.addEventListener('click',()=>{guideOverride=chip.dataset.guide;guideChips.forEach(c=>c.setAttribute('aria-pressed',String(c===chip)));applyGuideOverride()}));
+    const levelToggle=document.querySelector('#levelToggle'),levelBadge=document.querySelector('#levelBadge'),horizonLine=document.querySelector('#horizonLine');
+    let levelOn=false;
+    function levelRoll(e){const angle=(screen.orientation&&screen.orientation.angle)||0;const beta=e.beta||0,gamma=e.gamma||0;if(angle===90)return beta;if(angle===270)return -beta;if(angle===180)return -gamma;return gamma}
+    let levelRaf=0,levelLast=0;
+    function onOrient(e){
+      if(e.beta===null&&e.gamma===null)return;
+      levelLast=levelRoll(e);
+      if(levelRaf)return;
+      levelRaf=requestAnimationFrame(()=>{
+        levelRaf=0;
+        const roll=levelLast,ok=Math.abs(roll)<2;
+        levelBadge.textContent=(ok?'水平 ':'倾斜 ')+Math.abs(roll).toFixed(1)+'°';
+        levelBadge.classList.toggle('ok',ok);
+        horizonLine.style.transform='rotate('+(-roll)+'deg)';
+      });
+    }
+    levelToggle.addEventListener('click',async()=>{
+      levelOn=!levelOn;levelToggle.setAttribute('aria-checked',String(levelOn));
+      levelBadge.classList.toggle('hidden',!levelOn);horizonLine.classList.toggle('hidden',!levelOn);
+      if(!levelOn){window.removeEventListener('deviceorientation',onOrient);return}
+      try{
+        if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+          const st=await DeviceOrientationEvent.requestPermission();if(st!=='granted')throw 0;
+        }
+      }catch(error){
+        levelOn=false;levelToggle.setAttribute('aria-checked','false');
+        levelBadge.textContent='无法获取姿态（需在设置中允许动作与方向访问）';levelBadge.classList.remove('ok');
+        return;
+      }
+      window.addEventListener('deviceorientation',onOrient);
+      levelBadge.textContent='等待姿态数据…';
+    });
+
+    /* ================= 拍摄挑战 ================= */
+    const CH_TASKS=[
+      {k:'shot',i:0,t:'远景 · 用环境交代地点',d:'把人物拍成画面高度的约四分之一，让周围环境说明“在哪里”。',steps:['人物约占画高 1/4','头顶与脚下留出空间','地平线尽量放平']},
+      {k:'shot',i:2,t:'中景 · 卡在膝盖',d:'画框下沿卡在膝盖附近，突出肢体语言，裙摆边缘刚好入画。',steps:['下沿卡在膝盖','头顶留少量空间','手部姿态完整']},
+      {k:'shot',i:3,t:'中近景 · 卡在腰部',d:'画框下沿卡在腰部，人物表情与上身姿态成为重点。',steps:['下沿卡在腰线','肩膀不要顶到边','眼神方向留白']},
+      {k:'shot',i:5,t:'特写 · 卡在肩部',d:'画框下沿卡在肩膀，面部表情与情绪占满画面。',steps:['下沿卡在肩线','眼睛靠近上三分线','背景尽量简洁']},
+      {k:'composition',i:0,t:'三分法 · 交点站位',d:'让人物落在竖分割线附近，眼睛靠近上横线。',steps:['人物靠近左/右竖线','眼睛接近上三分线','视线方向留白']},
+      {k:'composition',i:3,t:'对角线 · 动势构图',d:'让人物或肢体延展方向沿对角线分布，画面更有动感。',steps:['主体沿对角线安排','运动方向前方留白','重心稳住不歪斜']},
+      {k:'composition',i:5,t:'框架 · 画中画',d:'利用门窗、拱门等自然框架，把主体放进“框”里。',steps:['先找到框架','主体落在框内','前景别挡住脸']},
+      {k:'composition',i:6,t:'前景 · 层次构图',d:'镜头前保留近处物体当前景，画面立刻有层次。',steps:['前景贴近镜头边缘','主体保持清晰','前景遮挡别过头']},
+      {k:'movement',i:0,t:'推镜头 · 5 秒匀速',d:'机位沿直线匀速前推 5 秒，主体由小变大，注意起幅与落幅。',steps:['起幅停 1 秒再动','全程匀速不忽快忽慢','落幅停 1 秒收尾']},
+      {k:'movement',i:2,t:'摇镜头 · 水平扫动',d:'脚不动，云台匀速水平摇 5 秒，画面里要出现新信息。',steps:['双脚站位固定','摇速均匀','结束时停稳']},
+      {k:'movement',i:4,t:'跟镜头 · 同速同行',d:'与人物同速同向移动，人物在画面中保持稳定。',steps:['与主体保持固定距离','人物位置保持稳定','观察背景流动']},
+      {k:'movement',i:7,t:'环绕 · 绕人转弧',d:'绕人物走一段弧线并持续对准主体。',steps:['步子小而匀','主体保持在画面中心','注意脚下安全']}
+    ];
+    const CH_KIND_NAME={shot:'景别',composition:'构图',movement:'运镜'};
+    const chCard=document.querySelector('#challengeCard');
+    let chTask=null,chBusy=false;
+    function chStats(){try{return JSON.parse(localStorage.getItem('fp-challenge-stats'))||{good:0,total:0}}catch(error){return{good:0,total:0}}}
+    function chSaveStats(st){try{localStorage.setItem('fp-challenge-stats',JSON.stringify(st))}catch(error){}}
+    function chPick(){let next;do{next=CH_TASKS[Math.floor(Math.random()*CH_TASKS.length)]}while(chTask&&next.t===chTask.t);chTask=next;chRender()}
+    function chRender(){
+      const t=chTask;
+      document.querySelector('#chKind').textContent=CH_KIND_NAME[t.k];
+      document.querySelector('#chTitle').textContent=t.t;
+      document.querySelector('#chDesc').textContent=t.d;
+      document.querySelector('#chSteps').replaceChildren(...t.steps.map(x=>{const sp=document.createElement('span');sp.className='step';sp.textContent=x;return sp}));
+      const st=chStats();document.querySelector('#chDone').textContent='达标 '+st.good+' / 拍摄 '+st.total;
+      const model=document.querySelector('.scene-image'),scene=document.querySelector('#placeholder');
+      mgStop();document.querySelector('#compScene').classList.add('hidden');model.style.display='';
+      if(t.k==='shot'){
+        const f=shotFrames[t.i]||shotFrames[0];
+        if(model.getAttribute('src')!==actorSrc)model.src=actorSrc;
+        model.style.setProperty('--model-scale',f.scale);model.style.setProperty('--model-y',f.y.toFixed(2)+'%');model.style.setProperty('--model-x','0%');
+      }else if(t.k==='composition'){
+        renderCompScene(t.i);
+        document.querySelector('#compScene').classList.remove('hidden');
+        model.style.display='none';
+      }
+      const live=Boolean(stream);
+      scene.classList.remove('hidden');scene.classList.toggle('ghost',live&&(t.k==='shot'||t.k==='composition'));
+      document.querySelector('#motionDemo').classList.add('hidden');
+      document.querySelector('#motionPlan').classList.add('hidden');
+      guideSvgEl.innerHTML=t.k==='composition'?(guides.composition[t.i]||''):(t.k==='shot'?guideThirds():'');
+    }
+    function showChallenge(){chCard.classList.remove('hidden');if(!chTask)chPick();else chRender()}
+    document.querySelector('#chNew').addEventListener('click',chPick);
+    function waitVideoReady(){return new Promise((resolve,reject)=>{const t0=Date.now();(function poll(){if(video.videoWidth>0)return resolve();if(Date.now()-t0>9000)return reject(new Error('timeout'));setTimeout(poll,150)})()})}
+    function capturePhotoBlob(){
+      const vw=video.videoWidth,vh=video.videoHeight;if(!vw||!vh)return null;
+      const r=currentRatio();let sw=vw,sh=vh;
+      if(vw/vh>r)sw=vh*r;else sh=vw/r;
+      const MAX=1280,sc=Math.min(1,MAX/Math.max(sw,sh));
+      const c=document.createElement('canvas');c.width=Math.round(sw*sc);c.height=Math.round(sh*sc);
+      c.getContext('2d').drawImage(video,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,c.width,c.height);
+      return new Promise(resolve=>c.toBlob(b=>resolve(b),'image/jpeg',.85));
+    }
+    document.querySelector('#chShot').addEventListener('click',async()=>{
+      if(chBusy)return;chBusy=true;
+      const status=document.querySelector('#recordStatus');
+      try{
+        if(!stream){status.textContent='正在开启相机…';cameraButton.click();await waitVideoReady()}
+        const blob=await capturePhotoBlob();
+        if(!blob)throw 0;
+        openShotModal(blob);
+      }catch(error){status.textContent='拍照未成功：请确认相机已开启并重试。'}
+      chBusy=false;
+    });
+    const shotModal=document.querySelector('#shotModal');let shotPending=null;
+    function openShotModal(blob){
+      shotPending={blob};
+      document.querySelector('#smImg').src=URL.createObjectURL(blob);
+      document.querySelector('#smMeta').textContent=chTask.t+' · '+CH_KIND_NAME[chTask.k]+' · '+new Date().toLocaleString();
+      shotModal.classList.remove('hidden');
+    }
+    function closeShotModal(){
+      const img=document.querySelector('#smImg');
+      if(img.getAttribute('src'))URL.revokeObjectURL(img.getAttribute('src'));
+      img.removeAttribute('src');
+      shotPending=null;shotModal.classList.add('hidden');
+    }
+    async function saveShot(rating){
+      if(!shotPending)return;
+      try{
+        await libAdd({kind:chTask.k,title:chTask.t,rating,blob:shotPending.blob});
+      }catch(error){
+        document.querySelector('#recordStatus').textContent='保存失败：手机存储空间可能已满，可先删除一些作品再试。';
+        return;
+      }
+      const st=chStats();st.total++;if(rating==='good')st.good++;chSaveStats(st);
+      document.querySelector('#chDone').textContent='达标 '+st.good+' / 拍摄 '+st.total;
+      closeShotModal();
+      document.querySelector('#recordStatus').textContent='已存入作品库，可在下方查看。';
+    }
+    document.querySelector('#smGood').addEventListener('click',()=>saveShot('good'));
+    document.querySelector('#smRetry').addEventListener('click',()=>saveShot('retry'));
+    document.querySelector('#smDiscard').addEventListener('click',closeShotModal);
+
+    /* ================= 作品库（IndexedDB） ================= */
+    const LIB_DB='qujingke-lib',LIB_STORE='photos';
+    let libDB;
+    function libOpen(){return new Promise((resolve,reject)=>{
+      if(libDB)return resolve(libDB);
+      const req=indexedDB.open(LIB_DB,1);
+      req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(LIB_STORE))db.createObjectStore(LIB_STORE,{keyPath:'id'})};
+      req.onsuccess=()=>{libDB=req.result;resolve(libDB)};
+      req.onerror=()=>reject(req.error);
+    })}
+    function libTx(mode){return libDB.transaction(LIB_STORE,mode).objectStore(LIB_STORE)}
+    function libAdd(rec){return libOpen().then(()=>new Promise((resolve,reject)=>{
+      const item={id:(crypto.randomUUID?crypto.randomUUID():'p'+Date.now()+Math.random().toString(36).slice(2)),ts:Date.now(),kind:rec.kind,title:rec.title,rating:rec.rating,blob:rec.blob};
+      const rq=libTx('readwrite').add(item);
+      rq.onsuccess=()=>{libTrim().then(()=>libRender()).then(resolve).catch(resolve)};
+      rq.onerror=()=>reject(rq.error);
+    }))}
+    function libAll(){return libOpen().then(()=>new Promise((resolve,reject)=>{
+      const rq=libTx('readonly').getAll();
+      rq.onsuccess=()=>resolve((rq.result||[]).sort((a,b)=>b.ts-a.ts));
+      rq.onerror=()=>reject(rq.error);
+    }))}
+    function libDelete(id){return libOpen().then(()=>new Promise((resolve,reject)=>{
+      const rq=libTx('readwrite').delete(id);rq.onsuccess=resolve;rq.onerror=()=>reject(rq.error);
+    }))}
+    function libTrim(){return libAll().then(list=>Promise.all(list.slice(80).map(item=>libDelete(item.id))))}
+    let libFilter='all',libUrls=[];
+    const libGrid=document.querySelector('#libGrid');
+    function libRender(){
+      libAll().then(list=>{
+        libUrls.forEach(u=>URL.revokeObjectURL(u));libUrls=[];
+        const shown=libFilter==='all'?list:list.filter(item=>item.kind===libFilter);
+        document.querySelector('#libCount').textContent=list.length+' 张';
+        document.querySelector('#libEmpty').classList.toggle('hidden',list.length>0);
+        libGrid.replaceChildren(...shown.map(item=>{
+          const url=URL.createObjectURL(item.blob);libUrls.push(url);
+          const btn=document.createElement('button');btn.type='button';
+          const img=document.createElement('img');img.src=url;img.alt=item.title;img.loading='lazy';
+          const tag=document.createElement('span');tag.className='lib-tag';
+          tag.textContent=(CH_KIND_NAME[item.kind]||item.kind)+(item.rating==='good'?' · 达标':item.rating==='free'?'':' · 待改进');
+          btn.append(img,tag);
+          btn.addEventListener('click',()=>libView(item,url));
+          return btn;
+        }));
+      }).catch(()=>{});
+    }
+    document.querySelector('#libFilters').addEventListener('click',e=>{
+      const chip=e.target.closest('.guide-chip');if(!chip)return;
+      libFilter=chip.dataset.lib;
+      document.querySelectorAll('#libFilters .guide-chip').forEach(c=>c.setAttribute('aria-pressed',String(c===chip)));
+      libRender();
+    });
+    let libCurrent=null,libUrl=null;
+    function libView(item,url){
+      libCurrent=item;libUrl=url;
+      document.querySelector('#lbImg').src=url;
+      document.querySelector('#lbMeta').textContent=item.title+' · '+(CH_KIND_NAME[item.kind]||'')+' · '+(item.rating==='good'?'达标':item.rating==='free'?'自由练习':'待改进')+' · '+new Date(item.ts).toLocaleString();
+      document.querySelector('#lightbox').classList.remove('hidden');
+    }
+    document.querySelector('#lbClose').addEventListener('click',()=>document.querySelector('#lightbox').classList.add('hidden'));
+    document.querySelector('#lbDelete').addEventListener('click',async()=>{
+      if(!libCurrent)return;await libDelete(libCurrent.id);
+      document.querySelector('#lightbox').classList.add('hidden');libRender();
+    });
+    document.querySelector('#lbSave').addEventListener('click',()=>{
+      if(!libCurrent)return;
+      const a=document.createElement('a');a.href=libUrl;
+      a.download='frame-practice-'+new Date(libCurrent.ts).toISOString().slice(0,19).replace(/[:T]/g,'-')+'.jpg';
+      a.click();
+    });
+    const photoButton=document.querySelector('#photoButton');
+    photoButton.addEventListener('click',async()=>{
+      if(!stream||!video.videoWidth)return;
+      const blob=await capturePhotoBlob();if(!blob)return;
+      const kind=activeKind==='movement'?'movement':activeKind==='composition'?'composition':'shot';
+      try{
+        await libAdd({kind,title:selectedLesson?selectedLesson.title:'自由练习',rating:'free',blob});
+      }catch(error){
+        document.querySelector('#recordStatus').textContent='保存失败：手机存储空间可能已满，可先删除一些作品再试。';
+        return;
+      }
+      document.querySelector('#recordStatus').textContent='已存入作品库，可在下方查看。';
+    });
+    libRender();
+        if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  </script>
+</body>
+</html>
