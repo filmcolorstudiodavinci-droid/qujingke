@@ -1,4 +1,4 @@
-const CACHE = 'frame-practice-v46';
+const CACHE = 'frame-practice-v47';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './brand-logo.webp',
