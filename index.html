@@ -99,7 +99,7 @@
 </head>
 <body>
   <main class="app">
-    <header><div class="brand-lockup" role="img" aria-label="取景课 · 短视频拍摄学习助手"></div><span class="ver-badge" id="verBadge">v54</span></header>
+    <header><div class="brand-lockup" role="img" aria-label="取景课 · 短视频拍摄学习助手"></div><span class="ver-badge" id="verBadge">v55</span></header>
     <h1>看懂画面，拍好每一镜。</h1>
     <p class="sub">选练习、看示范，再用自己的镜头试一遍。</p>
 
@@ -149,7 +149,6 @@
     <div class="record-controls">
       <button class="camera-btn" id="cameraButton">开启相机</button>
       <button class="record-btn" id="recordButton" type="button" disabled>开始录制</button>
-      <button class="save-btn hidden" id="saveButton" type="button">保存到手机</button>
       <button class="camera-btn" id="photoButton" type="button" disabled>拍照保存</button>
     </div>
     <p class="record-status hidden" id="cameraMessage" aria-live="polite"></p>
@@ -240,9 +239,9 @@
       {scale:12.0,y:-86.4}    // 大特写：只取眼部局部（双眉+双眼+鼻梁）
     ];
     
-    let stream,recordingStream,recorder,chunks=[],recordedBlob,recordingUrl,drawFrame,timer,recordingCap,poseTimer,countdownTimer=0,stopByUser=false,nativeVideoNext=false,recorderStopGuard=0,recHealthTimer=0,finalizeRecording=null;
+    let stream,recordingStream,recorder,chunks=[],recordedBlob,recordingUrl,drawFrame,timer,recordingCap,poseTimer,countdownTimer=0,stopByUser=false,nativeVideoNext=false,recordFinalized=false,recordingStartTs=0,recorderStopGuard=0,recHealthTimer=0,finalizeRecording=null;
     function stopRecording(){if(!recorder||recorder.state!=='recording')return;stopByUser=true;recordButton.disabled=true;recordButton.textContent='正在生成视频…';clearTimeout(recorderStopGuard);try{recordingStream&&recordingStream.getTracks().forEach(track=>track.stop())}catch(error){}try{recorder.stop()}catch(error){if(finalizeRecording)finalizeRecording()}recorderStopGuard=setTimeout(()=>{try{if(recorder&&recorder.state!=='inactive')recorder.stop()}catch(error){}if(finalizeRecording)finalizeRecording()},6000)}
-    const video=document.querySelector('#camera'),cameraButton=document.querySelector('#cameraButton'),recordButton=document.querySelector('#recordButton'),saveButton=document.querySelector('#saveButton'),recordStatus=document.querySelector('#recordStatus');
+    const video=document.querySelector('#camera'),cameraButton=document.querySelector('#cameraButton'),recordButton=document.querySelector('#recordButton'),recordStatus=document.querySelector('#recordStatus');
     /* ================= 镜头运动：真实机位推演（Canvas 透视投影） ================= */
     var MG={c:null,ctx:null,plan:null,pctx:null,W:0,H:0,dpr:1,f:0,raf:0,idx:-1,active:false,t0:0,fit:null,side:false,pw:0,ph:0,ro:null};
     const MG_AR=3338/4481,MG_BODY=1.68,MG_VFOV=50*Math.PI/180,MG_LOOP=7000,D2R=Math.PI/180;
@@ -1050,12 +1049,16 @@ var MG_INFO=[
     showBank(activeKind);
     if(location.hash.startsWith('#mg=')){const [mi,mu]=location.hash.slice(4).split(',').map(Number);MG.fixedU=mu;showBank('movement');showLesson(banks.movement[mi]);}
     gridToggle.addEventListener('click',()=>{const visible=gridToggle.getAttribute('aria-checked')!=='true';gridToggle.setAttribute('aria-checked',String(visible));grid.classList.toggle('hidden',!visible)});
-    async function saveRecording(automatic=false){if(!recordedBlob||!recordingUrl)return;const type=recordedBlob.type||'video/webm',extension=type.includes('mp4')?'mp4':'webm',file=new File([recordedBlob],`qujingke-${new Date().toISOString().replace(/[:.]/g,'-')}.${extension}`,{type});try{if(navigator.canShare?.({files:[file]})&&navigator.share){recordStatus.textContent=PHOTO_HINT;await navigator.share({files:[file],title:'取景课拍摄练习'});clearRecordingPreview();showLesson(selectedLesson);recordStatus.textContent='已保存到照片。'}else if(automatic){const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();setTimeout(()=>{clearRecordingPreview();showLesson(selectedLesson)},2000);recordStatus.textContent=downloadHint()}else{const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();recordStatus.textContent=downloadHint()}}catch(error){if(error.name==='AbortError'){if(automatic){const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();setTimeout(()=>{clearRecordingPreview();showLesson(selectedLesson)},2000);recordStatus.textContent='系统面板被关闭，'+downloadHint()}else recordStatus.textContent='保存面板已关闭，视频仍保留；如需保存，请点“保存到手机”。'}else if(automatic){const link=document.createElement('a');link.href=recordingUrl;link.download=file.name;link.click();setTimeout(()=>{clearRecordingPreview();showLesson(selectedLesson)},2000);recordStatus.textContent='系统面板未能打开，'+downloadHint()}else recordStatus.textContent='保存未完成，请重试或从视频播放菜单选择保存。'}}
-    function clearRecordingPreview(){if(recordingUrl)URL.revokeObjectURL(recordingUrl);recordingUrl=null;recordedBlob=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.style.display='none';video.controls=false;video.muted=true;video.load();saveButton.classList.add('hidden');cameraButton.disabled=false;cameraButton.textContent='开启相机';recordButton.setAttribute('aria-pressed','false');recordButton.textContent='开始录制';aspectOptions.forEach(option=>option.disabled=false)}
+    /* ================= 保存（唯一出口）：弹系统面板存到照片，失败自动下载，完成自动回到预览 ================= */
+    function restartPreview(){cameraButton.disabled=false;document.querySelector('#placeholder').classList.remove('hidden');cameraButton.click()}
+    async function saveRecording(){if(!recordedBlob||!recordingUrl)return;const type=recordedBlob.type||'video/mp4',extension=type.includes('mp4')?'mp4':'webm',name=`qujingke-${new Date().toISOString().replace(/[:.]/g,'-')}.${extension}`,file=new File([recordedBlob],name,{type});const done=()=>{clearRecordingPreview();showLesson(selectedLesson);restartPreview()};try{if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){recordStatus.textContent=PHOTO_HINT;await navigator.share({files:[file],title:'取景课拍摄练习'});recordStatus.textContent='已保存到照片。';done();return}}catch(error){downloadBlob(recordedBlob,name);recordStatus.textContent=(error&&error.name==='AbortError'?'系统面板被关闭，':'系统面板未能打开，')+downloadHint();done();return}downloadBlob(recordedBlob,name);recordStatus.textContent=downloadHint();done()}
+    function clearRecordingPreview(){clearInterval(timer);clearTimeout(recordingCap);clearTimeout(recorderStopGuard);clearTimeout(recHealthTimer);timer=recordingCap=recorderStopGuard=recHealthTimer=0;if(recordingUrl){URL.revokeObjectURL(recordingUrl);recordingUrl=null}recordedBlob=null;chunks=[];recorder=null;recordingStream=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.controls=false;video.muted=true;video.load();restartRecordingUI()}
+    stopRecording=function(){if(!recorder||recorder.state!=='recording')return;stopByUser=true;recordButton.disabled=true;recordButton.textContent='正在生成视频…';clearTimeout(recorderStopGuard);try{recordingStream&&recordingStream.getTracks().forEach(track=>track.stop())}catch(error){}try{recorder.stop()}catch(error){finalizeRecording()}recorderStopGuard=setTimeout(()=>{try{if(recorder&&recorder.state!=='inactive')recorder.stop()}catch(error){}finalizeRecording()},6000)}
+    finalizeRecording=function(){if(recordFinalized)return;recordFinalized=true;clearInterval(timer);clearTimeout(recordingCap);clearTimeout(recorderStopGuard);clearTimeout(recHealthTimer);timer=recordingCap=recorderStopGuard=recHealthTimer=0;aspectOptions.forEach(option=>option.disabled=false);const type=recorder&&recorder.mimeType?recorder.mimeType:'video/mp4';recordedBlob=new Blob(chunks,{type});chunks=[];recorder=null;recordingStream=null;stream&&stream.getTracks().forEach(track=>track.stop());stream=null;if(!recordedBlob.size){recordStatus.textContent=useNativeCapture?'本机不支持网页录制，已切换为系统原相机模式：请再点一次「开始录制」。':'没有生成视频，请重试。';if(useNativeCapture)nativeVideoNext=true;cameraButton.disabled=false;restartRecordingUI();return}recordingUrl=URL.createObjectURL(recordedBlob);video.pause();video.srcObject=null;document.querySelector('#placeholder').classList.remove('hidden');recordStatus.textContent='录制完成，正在打开系统保存面板…';void saveRecording()}
     cameraButton.addEventListener('click',async()=>{const message=document.querySelector('#cameraMessage');if(stream){stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;video.style.display='none';if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden','compact');message.classList.add('hidden')}else{document.querySelector('#placeholder').classList.remove('hidden');message.classList.remove('hidden')}cameraButton.textContent='开启相机';viewfinder.classList.toggle('on-light',activeKind==='shot');document.querySelector('#placeholder').classList.remove('ghost');if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden')}recordStatus.textContent='相机已关闭。视频只在本机处理，保存时不会上传。';return}if(!navigator.mediaDevices?.getUserMedia){message.textContent='当前环境无法访问相机，请用 HTTPS 地址在手机浏览器中打开';message.classList.remove('hidden');return}cameraButton.disabled=true;try{const nextStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:true});clearRecordingPreview();stream=nextStream;video.srcObject=stream;video.controls=false;video.style.display='block';document.querySelector('#placeholder').classList.add('hidden');if(activeKind==='movement'){document.querySelector('#motionDemo').classList.remove('hidden');document.querySelector('#motionDemo').classList.add('compact')}else document.querySelector('#motionDemo').classList.add('hidden');viewfinder.classList.remove('on-light');message.classList.add('hidden');cameraButton.textContent='关闭相机';recordButton.disabled=false;photoButton.disabled=false;recordStatus.textContent='相机和麦克风已准备好，点击“开始录制”开始拍摄。'}catch(error){message.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':'暂时无法开启相机，请检查设备相机是否可用';message.classList.remove('hidden');recordStatus.textContent=message.textContent}finally{cameraButton.disabled=false}});
     function waitCameraReady(timeout){return new Promise(resolve=>{const t0=Date.now();(function poll(){if(stream&&video.videoWidth>0)return resolve(true);if(Date.now()-t0>timeout)return resolve(false);setTimeout(poll,150)})()})}
-        recordButton.addEventListener('click',async()=>{if(recorder?.state==='recording'){stopRecording();return}if(nativeVideoNext){nativeVideoNext=false;videoCaptureInput.value='';videoCaptureInput.click();recordStatus.textContent='已调起系统原相机：拍摄完成点“使用视频”，即自动保存到手机。';return}if(typeof MediaRecorder==='undefined'||!navigator.mediaDevices?.getUserMedia){if(useNativeCapture&&typeof MediaRecorder==='undefined'){nativeVideoNext=false;videoCaptureInput.value='';videoCaptureInput.click();recordStatus.textContent='已调起系统原相机：拍摄完成点“使用视频”，即自动保存到手机。';return}recordStatus.textContent='此浏览器暂不支持视频录制。请使用较新的 Safari 或 Chrome。';return}if(!stream){recordButton.disabled=true;recordStatus.textContent='正在开启相机，请允许访问…';cameraButton.click();const ok=await waitCameraReady(9000);recordButton.disabled=false;if(!ok){recordStatus.textContent='相机未能开启，请检查权限后重试。';return}}if(countdownTimer){clearInterval(countdownTimer);countdownTimer=0;document.querySelector('#countdown').classList.add('hidden')}beginRecording()});async function beginRecording(){recordButton.disabled=true;recordStatus.textContent='正在准备录制。';try{const audioTracks=stream.getAudioTracks().filter(track=>track.readyState==='live'&&track.enabled);if(!audioTracks.length)throw new Error('No live microphone track');const tracks=[...stream.getVideoTracks(),...audioTracks];recordingStream=new MediaStream(tracks);const isApple=/iphone|ipad|ipod|macintosh/i.test(navigator.userAgent);const mimeType=isApple?null:['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4','video/webm;codecs=vp8,opus','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));chunks=[];let finalized=false,recHealthy=false,recTriedFallback=false,recStartedTs=Date.now();const wireRecorder=rec=>{rec.ondataavailable=event=>{if(event.data&&event.data.size){chunks.push(event.data);recHealthy=true}};rec.onstop=()=>finalizeRecording()};recorder=new MediaRecorder(recordingStream,mimeType?{mimeType}:undefined);wireRecorder(recorder);recorder.start(1000);recHealthTimer=setTimeout(()=>{if(recorder&&recorder.state==='recording'&&!recHealthy&&!recTriedFallback){recTriedFallback=true;try{recorder.onstop=null;recorder.stop()}catch(error){}chunks=[];try{recorder=new MediaRecorder(recordingStream);wireRecorder(recorder);recorder.start();recStartedTs=Date.now()}catch(error){}}},4000);finalizeRecording=()=>{if(finalized)return;finalized=true;clearTimeout(recorderStopGuard);clearTimeout(recHealthTimer);clearInterval(timer);clearTimeout(recordingCap);aspectOptions.forEach(option=>option.disabled=false);const type=recorder.mimeType||'video/mp4';recordedBlob=new Blob(chunks,{type});chunks=[];if(!recordedBlob.size){stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream=null;if(useNativeCapture){nativeVideoNext=true;recordStatus.textContent='本机不支持网页录制，已切换为系统原相机模式：请再点一次「开始录制」，将直接调起原相机拍摄。'}else{recordStatus.textContent='没有生成视频，请重试。'}recordButton.disabled=false;recordButton.textContent='开始录制';cameraButton.disabled=false;return}recordingUrl=URL.createObjectURL(recordedBlob);document.querySelector('#motionDemo').classList.add('hidden');video.pause();video.srcObject=null;video.src=recordingUrl;video.controls=true;video.muted=false;video.style.display='block';stream?.getTracks().forEach(track=>track.stop());stream=null;recordingStream=null;cameraButton.textContent='重新开启相机';cameraButton.disabled=false;document.querySelector('#placeholder').classList.add('hidden');document.querySelector('#cameraMessage').classList.add('hidden');recordButton.setAttribute('aria-pressed','false');recordButton.disabled=true;recordButton.textContent='开始录制';saveButton.classList.remove('hidden');recordStatus.textContent='录制完成，正在自动保存到手机…';if(stopByUser)void saveRecording(true);stopByUser=false};stopByUser=false;aspectOptions.forEach(option=>option.disabled=true);recordButton.setAttribute('aria-pressed','true');recordButton.textContent='结束录制';cameraButton.disabled=true;recordButton.disabled=false;timer=setInterval(()=>{const seconds=Math.floor((Date.now()-recStartedTs)/1000);recordStatus.textContent=`正在录制 · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`},500);recordingCap=setTimeout(()=>{if(recorder?.state==='recording'){recordStatus.textContent='已达最长录制时长 10 分钟，正在生成视频…';stopRecording()}},600000)}catch(error){clearInterval(timer);clearTimeout(recordingCap);recordingStream?.getTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':error.message==='No live microphone track'?'没有检测到可用麦克风音轨，请重新开启相机并检查麦克风权限':'无法启动录制，请检查浏览器是否支持摄像头录制';recordButton.disabled=false;recordButton.textContent='开始录制';aspectOptions.forEach(option=>option.disabled=false)}finally{if(recorder?.state!=='recording')cameraButton.disabled=false}}
-    saveButton.addEventListener('click',()=>void saveRecording());
+    recordButton.addEventListener('click',async()=>{if(recorder&&recorder.state==='recording'){stopRecording();return}if(nativeVideoNext){nativeVideoNext=false;useNativeCamera('video');return}if(typeof MediaRecorder==='undefined'){if(useNativeCapture){useNativeCamera('video');return}recordStatus.textContent='此浏览器暂不支持视频录制。请使用较新的 Safari 或 Chrome。';return}if(!stream){recordButton.disabled=true;recordStatus.textContent='正在开启相机，请允许访问…';cameraButton.click();const ok=await waitCameraReady(9000);recordButton.disabled=false;if(!ok){recordStatus.textContent='相机未能开启，请检查权限后重试。';return}}beginRecording()});
+    async function beginRecording(){recordFinalized=false;recordButton.disabled=true;recordStatus.textContent='正在准备录制。';try{const audioTracks=stream.getAudioTracks().filter(track=>track.readyState==='live'&&track.enabled);if(!audioTracks.length)throw new Error('No live microphone track');recordingStream=new MediaStream([...stream.getVideoTracks(),...audioTracks]);const isApple=/iphone|ipad|ipod|macintosh/i.test(navigator.userAgent);const mimeType=isApple?null:['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4','video/webm;codecs=vp8,opus','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));chunks=[];let recHealthy=false,recTriedFallback=false;const wireRecorder=rec=>{rec.ondataavailable=event=>{if(event.data&&event.data.size){chunks.push(event.data);recHealthy=true}};rec.onstop=()=>finalizeRecording()};recorder=new MediaRecorder(recordingStream,mimeType?{mimeType}:undefined);wireRecorder(recorder);recorder.start(1000);recHealthTimer=setTimeout(()=>{if(recorder&&recorder.state==='recording'&&!recHealthy&&!recTriedFallback){recTriedFallback=true;try{recorder.onstop=null;recorder.stop()}catch(error){}chunks=[];try{recorder=new MediaRecorder(recordingStream);wireRecorder(recorder);recorder.start()}catch(error){}}},4000);stopByUser=false;aspectOptions.forEach(option=>option.disabled=true);recordButton.setAttribute('aria-pressed','true');recordButton.textContent='结束录制';recordButton.disabled=false;cameraButton.disabled=true;recordingStartTs=Date.now();timer=setInterval(()=>{const seconds=Math.floor((Date.now()-recordingStartTs)/1000);recordStatus.textContent=`正在录制 · ${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`},500);recordingCap=setTimeout(()=>{if(recorder&&recorder.state==='recording'){recordStatus.textContent='已达最长录制时长 10 分钟，正在保存…';stopRecording()}},600000)}catch(error){clearInterval(timer);recordingStream&&recordingStream.getTracks().forEach(track=>track.stop());recordingStream=null;recordStatus.textContent=error.name==='NotAllowedError'?'相机或麦克风权限未开启，请在浏览器的网站设置中允许访问后重试':error.message==='No live microphone track'?'没有检测到可用麦克风音轨，请重新开启相机并检查麦克风权限':'无法启动录制，请检查浏览器是否支持摄像头录制';cameraButton.disabled=false;restartRecordingUI()}}
     window.addEventListener('pagehide',()=>{clearInterval(poseTimer);if(recorder?.state==='recording')recorder.stop();stream?.getTracks().forEach(track=>track.stop());recordingStream?.getTracks().forEach(track=>track.stop());if(recordingUrl)URL.revokeObjectURL(recordingUrl)});
 (function(){
       const hint=document.querySelector('#installHint'),text=document.querySelector('#installHintText'),btn=document.querySelector('#installBtn'),close=document.querySelector('#installClose');
@@ -1094,7 +1097,8 @@ var MG_INFO=[
     const guideChips=[...document.querySelectorAll('.guide-chip[data-guide]')];
     guideChips.forEach(chip=>chip.addEventListener('click',()=>{guideOverride=chip.dataset.guide;guideChips.forEach(c=>c.setAttribute('aria-pressed',String(c===chip)));applyGuideOverride()}));
 
-    /* ================= 拍照自动保存到手机 ================= */
+    /* ================= 拍照 + 统一保存出口 + 系统原相机兜底 ================= */
+    function restartRecordingUI(){recordButton.textContent='开始录制';recordButton.disabled=false;recordButton.setAttribute('aria-pressed','false');aspectOptions.forEach(option=>option.disabled=false)}
     function capturePhotoBlob(){
       const vw=video.videoWidth,vh=video.videoHeight;if(!vw||!vh)return null;
       const r=currentRatio();let sw=vw,sh=vh;
@@ -1106,42 +1110,17 @@ var MG_INFO=[
       for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
       return new Blob([u8],{type:'image/jpeg'});
     }
-
-    /* ================= 直接保存到手机相册 ================= */
-    function downloadBlob(blob,name){
-      const url=URL.createObjectURL(blob),a=document.createElement('a');
-      a.href=url;a.download=name;a.click();
-      setTimeout(()=>URL.revokeObjectURL(url),1500);
-    }
-    /* ================= 移动端：调起系统原相机，原文件直接保存 ================= */
-    const videoCaptureInput=document.querySelector('#videoCapture'),photoCaptureInput=document.querySelector('#photoCapture');
+    function downloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
     const useNativeCapture=/iphone|ipad|ipod|android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
-    function extOf(type,fallback){if(type.includes('mp4'))return'.mp4';if(type.includes('quicktime')||type.includes('mov'))return'.mov';if(type.includes('webm'))return'.webm';if(type.includes('jpeg')||type.includes('jpg'))return'.jpg';if(type.includes('heic'))return'.heic';if(type.includes('png'))return'.png';return fallback}
-    /* ================= 保存到手机照片（相册）：iOS / Android 统一走系统面板 ================= */
     const isIOSDevice=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.userAgent));
     const PHOTO_HINT=isIOSDevice?'正在打开系统面板：请点【存储图像 / 存储视频】保存到照片':'正在打开系统面板：请选【保存到相册 / 添加到图库】';
     function downloadHint(){return isIOSDevice?'iPhone 网页无法直接写入照片：文件已保存到「文件」App，可打开文件→分享→存储图像存入相册。':'已下载保存：多数安卓手机相册会自动显示该文件（在 Download 文件夹）。'}
-    async function saveToPhotos(file,okMsg){
-      try{
-        if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
-          recordStatus.textContent=PHOTO_HINT;
-          await navigator.share({files:[file],title:'取景课拍摄练习'});
-          recordStatus.textContent=okMsg;
-          return;
-        }
-      }catch(error){
-        if(error&&error.name==='AbortError'){recordStatus.textContent='已取消保存。';return}
-      }
-      downloadBlob(file,file.name);
-      recordStatus.textContent=downloadHint();
-    }
-    async function saveNativeFile(file,kind){
-      await saveToPhotos(file,'已保存到照片。');
-    }
-    videoCaptureInput.addEventListener('change',()=>{const f=videoCaptureInput.files&&videoCaptureInput.files[0];videoCaptureInput.value='';if(!f)return;recordStatus.textContent='拍摄完成，正在保存…';saveNativeFile(f,'video')});
-    photoCaptureInput.addEventListener('change',()=>{const f=photoCaptureInput.files&&photoCaptureInput.files[0];photoCaptureInput.value='';if(!f)return;recordStatus.textContent='拍摄完成，正在保存…';saveNativeFile(f,'photo')});
-    recordButton.disabled=false;document.querySelector('#photoButton').disabled=false;
-    const photoButton=document.querySelector('#photoButton');
+    async function saveToPhotos(file,okMsg){try{if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){recordStatus.textContent=PHOTO_HINT;await navigator.share({files:[file],title:'取景课拍摄练习'});recordStatus.textContent=okMsg;return}}catch(error){if(error&&error.name==='AbortError'){recordStatus.textContent='已取消保存。';return}}downloadBlob(file,file.name);recordStatus.textContent=downloadHint()}
+    const nativeVideoInput=document.querySelector('#videoCapture'),nativePhotoInput=document.querySelector('#photoCapture'),photoButton=document.querySelector('#photoButton');
+    function useNativeCamera(kind){const input=kind==='video'?nativeVideoInput:nativePhotoInput;input.value='';input.click();recordStatus.textContent='已调起系统原相机：拍摄完成点“使用视频/照片”，即自动保存到手机。'}
+    nativeVideoInput.addEventListener('change',()=>{const f=nativeVideoInput.files&&nativeVideoInput.files[0];nativeVideoInput.value='';if(!f)return;recordStatus.textContent='拍摄完成，正在保存…';saveToPhotos(f,'已保存到照片。')});
+    nativePhotoInput.addEventListener('change',()=>{const f=nativePhotoInput.files&&nativePhotoInput.files[0];nativePhotoInput.value='';if(!f)return;recordStatus.textContent='拍摄完成，正在保存…';saveToPhotos(f,'已保存到照片。')});
+    recordButton.disabled=false;photoButton.disabled=false;
     photoButton.addEventListener('click',async()=>{
       if(!stream||!video.videoWidth){
         if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
@@ -1150,20 +1129,16 @@ var MG_INFO=[
           const ok=await waitCameraReady(9000);
           photoButton.disabled=false;
           if(!ok){recordStatus.textContent='相机未能开启，请检查权限后重试。';return}
-        }else if(useNativeCapture){photoCaptureInput.value='';photoCaptureInput.click();recordStatus.textContent='已调起系统原相机：拍摄完成点“使用照片”，即自动保存到手机。';return}
+        }else if(useNativeCapture){useNativeCamera('photo');return}
         else{recordStatus.textContent='当前浏览器无法访问相机。';return}
       }
       photoButton.disabled=true;
-      const status=document.querySelector('#recordStatus');
-      let blob=null;
       try{
-        blob=capturePhotoBlob();
-        if(!blob)throw 0;
+        const blob=capturePhotoBlob();
+        if(!blob)throw new Error('no frame');
         const file=new File([blob],'qujingke-'+new Date().toISOString().replace(/[:.]/g,'-')+'.jpg',{type:'image/jpeg'});
         await saveToPhotos(file,'已保存到照片。');
-      }catch(error){
-        status.textContent='保存未完成，请重试。';
-      }
+      }catch(error){recordStatus.textContent='保存未完成，请重试。'}
       photoButton.disabled=false;
     });
         if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
