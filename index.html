@@ -1099,30 +1099,38 @@ var MG_INFO=[
       const MAX=1280,sc=Math.min(1,MAX/Math.max(sw,sh));
       const c=document.createElement('canvas');c.width=Math.round(sw*sc);c.height=Math.round(sh*sc);
       c.getContext('2d').drawImage(video,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,c.width,c.height);
-      return new Promise(resolve=>c.toBlob(b=>resolve(b),'image/jpeg',.85));
+      const bin=atob(c.toDataURL('image/jpeg',.85).split(',')[1]);const u8=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+      return new Blob([u8],{type:'image/jpeg'});
     }
 
     /* ================= 直接保存到手机相册 ================= */
+    function downloadBlob(blob,name){
+      const url=URL.createObjectURL(blob),a=document.createElement('a');
+      a.href=url;a.download=name;a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+    }
     const photoButton=document.querySelector('#photoButton');
     photoButton.addEventListener('click',async()=>{
       if(!stream||!video.videoWidth)return;
       photoButton.disabled=true;
       const status=document.querySelector('#recordStatus');
+      let blob=null;
       try{
-        const blob=await capturePhotoBlob();
+        blob=capturePhotoBlob();
         if(!blob)throw 0;
         const file=new File([blob],'qujingke-'+new Date().toISOString().replace(/[:.]/g,'-')+'.jpg',{type:'image/jpeg'});
         if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
           await navigator.share({files:[file],title:selectedLesson?selectedLesson.title:'取景课拍摄练习'});
           status.textContent='照片已保存到手机相册。';
         }else{
-          const url=URL.createObjectURL(blob),a=document.createElement('a');
-          a.href=url;a.download=file.name;a.click();
-          setTimeout(()=>URL.revokeObjectURL(url),1500);
+          downloadBlob(blob,file.name);
           status.textContent='照片已自动保存（浏览器下载）；iPhone 可在分享面板选“存储图像”存入相册。';
         }
       }catch(error){
-        status.textContent=error&&error.name==='AbortError'?'已取消保存。':'保存未完成，请重试。';
+        if(error&&error.name==='AbortError'){status.textContent='已取消保存。'}
+        else if(blob){downloadBlob(blob,'qujingke-'+new Date().toISOString().replace(/[:.]/g,'-')+'.jpg');status.textContent='系统面板未能打开，照片已自动下载保存；请在浏览器下载列表中查看。'}
+        else{status.textContent='保存未完成，请重试。'}
       }
       photoButton.disabled=false;
     });
